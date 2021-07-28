@@ -34,34 +34,34 @@ class ObjUtils {
 					parserIndex(obj, strs);
 			}
 		}
-		trace(obj);
-		trace(obj.vertexIndex.length, obj.vertexPoint.length);
+		trace("obj", obj.vertexIndex.length, obj.vertexPoint.length);
 		return obj;
 	}
 
 	public static function parserIndex(data:ObjData, strs:Array<String>):Void {
-		var isRect = strs.length == 5;
-		trace("isRect?", isRect);
 		var array:Array<Int> = [];
 		for (i in 1...strs.length) {
 			if (strs[i] == "")
 				continue;
-			// 需要判断是否为四边形
 			var d = strs[i].split("/");
 			array.push(Std.parseInt(d[0]) - 1);
 		}
-		if (isRect) {
-            data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
-            data.vertexIndex.push(parseIndex(array[1], data.vertexPoint.length));
-            data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
-            data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
-            data.vertexIndex.push(parseIndex(array[3], data.vertexPoint.length));
-            data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
+		// 解析面
+		var len = array.length;
+		switch (len) {
+			case 5:
 
-        } else {
-			for (index => value in array) {
-				data.vertexIndex.push(parseIndex(value, data.vertexPoint.length));
-			}
+			case 4:
+				data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[1], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[3], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
+			case 3:
+				for (index => value in array) {
+					data.vertexIndex.push(parseIndex(value, data.vertexPoint.length));
+				}
 		}
 	}
 

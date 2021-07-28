@@ -50,7 +50,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		this.addEventListener(RenderEvent.RENDER_OPENGL, onRender);
 		this.setFrameEvent(true);
 
-		for (i in 0...12) {
+		for (i in 0...4000) {
 			var r = Math.random();
 			var g = Math.random();
 			var b = Math.random();
@@ -180,7 +180,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var projectionMatrixIndex = gl.getUniformLocation(shaderProgram, "projectionMatrix");
 
 		var m = new Matrix4();
-		m.appendScale(100, 100, 100);
+		// m.appendScale(100, 100, 100);
+		m.appendScale(1, 1, 1);
 		m.appendRotation(r, new Vector4(0, 0, 1, 0));
 		m.appendRotation(r, new Vector4(0, 1, 0, 0));
 		r += 1;
