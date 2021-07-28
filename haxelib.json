@@ -1,0 +1,14 @@
+{
+  "name": "openfl-3d",
+  "url": "",
+  "license": "MIT",
+  "tags": ["openfl","3d"],
+  "description": "",
+  "version": "0.0.1",
+  "releasenote": "",
+  "contributors": ["rainy"],
+  "dependencies": {
+      
+  },
+  "classPath": "Source"
+}
