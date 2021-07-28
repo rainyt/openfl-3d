@@ -1,5 +1,8 @@
-package openfl.display3d;
+package zygame.display3d;
 
+import openfl.display3D.Context3DTextureFilter;
+import openfl.display3D.Context3DWrapMode;
+import openfl.display3D.Context3DMipFilter;
 import lime.graphics.opengl.GLTexture;
 import openfl.display.BitmapData;
 import lime.math.Vector4;
@@ -18,6 +21,7 @@ import openfl.events.RenderEvent;
 class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 纹理
+	 * 
 	 */
 	public var texture:BitmapData;
 
@@ -229,10 +233,12 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		// 绑定纹理
 		if (texture != null) {
-			// @:privateAccess texture.getTexture(stage.context3D).__getGLFramebuffer(true, 3, 0);
-			var glTex:GLTexture = cast @:privateAccess texture.getTexture(stage.context3D).__textureID;
+			var glTex = cast @:privateAccess texture.getTexture(stage.context3D);
+			stage.context3D.setTextureAt(0,glTex);
+			// Add it
+			@:privateAccess  stage.context3D.__flushGLTextures();
 			gl.activeTexture(gl.TEXTURE0);
-			gl.bindTexture(gl.TEXTURE_2D, glTex);
+			gl.bindTexture(gl.TEXTURE_2D,  @:privateAccess  glTex.__getTexture());
 			gl.uniform1i(gl.getUniformLocation(shaderProgram, "texture0"), 0);
 		}
 

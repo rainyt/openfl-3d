@@ -1,4 +1,4 @@
-package openfl.display3d;
+package zygame.display3d;
 
 import glsl.GLSL.texture2D;
 import glsl.Sampler2D;
