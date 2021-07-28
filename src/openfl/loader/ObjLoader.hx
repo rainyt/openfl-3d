@@ -50,7 +50,6 @@ class ObjUtils {
 		var len = array.length;
 		switch (len) {
 			case 5:
-
 			case 4:
 				data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
 				data.vertexIndex.push(parseIndex(array[1], data.vertexPoint.length));

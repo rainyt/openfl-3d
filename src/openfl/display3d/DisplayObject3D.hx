@@ -1,5 +1,6 @@
 package openfl.display3d;
 
+import openfl.display.BitmapData;
 import lime.math.Vector4;
 import lime.math.Matrix4;
 import lime.graphics.opengl.GLProgram;
@@ -15,6 +16,11 @@ import openfl.events.RenderEvent;
  */
 class DisplayObject3D extends DisplayObjectContainer {
 	/**
+	 * 纹理
+	 */
+	public var texture:BitmapData;
+
+	/**
 	 * 顶点坐标
 	 */
 	public var vertices:Array<Float>;
@@ -23,6 +29,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * 顶点索引
 	 */
 	public var indices:Array<Int>;
+
+	/**
+	 * UV坐标
+	 */
+	public var uv:Array<Int>;
 
 	/**
 	 * 顶点数据
@@ -43,6 +54,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	private var c = [];
 
+	public var scaleZ:Float = 1;
+
 	public function new(vertices:Array<Float>, indices:Array<Int>) {
 		super();
 		this.vertices = vertices;
@@ -50,10 +63,13 @@ class DisplayObject3D extends DisplayObjectContainer {
 		this.addEventListener(RenderEvent.RENDER_OPENGL, onRender);
 		this.setFrameEvent(true);
 
-		for (i in 0...4000) {
-			var r = Math.random();
-			var g = Math.random();
-			var b = Math.random();
+		for (i in 0...vertices.length) {
+			// var r = Math.random();
+			// var g = Math.random();
+			// var b = Math.random();
+			var r = 1;
+			var g = 0;
+			var b = 0;
 			for (i in 0...4) {
 				c.push(r);
 				c.push(g);
@@ -181,7 +197,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		var m = new Matrix4();
 		// m.appendScale(100, 100, 100);
-		m.appendScale(1, 1, 1);
+		m.appendScale(this.scaleX, this.scaleY, this.scaleZ);
 		m.appendRotation(r, new Vector4(0, 0, 1, 0));
 		m.appendRotation(r, new Vector4(0, 1, 0, 0));
 		r += 1;
@@ -212,5 +228,10 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		gl.disable(gl.DEPTH_TEST);
 		gl.depthMask(false);
+	}
+
+	override function scale(f:Float):DisplayObjectContainer {
+		this.scaleZ = f;
+		return super.scale(f);
 	}
 }
