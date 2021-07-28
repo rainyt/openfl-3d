@@ -1,5 +1,6 @@
 package openfl.display3d;
 
+import lime.graphics.opengl.GLTexture;
 import openfl.display.BitmapData;
 import lime.math.Vector4;
 import lime.math.Matrix4;
@@ -33,7 +34,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * UV坐标
 	 */
-	public var uv:Array<Int>;
+	public var uvs:Array<Float>;
 
 	/**
 	 * 顶点数据
@@ -41,6 +42,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 	private var glBuffer:GLBuffer;
 
 	private var colorBuffer:GLBuffer;
+
+	private var coordBuffer:GLBuffer;
 
 	/**
 	 * 顶点索引数据
@@ -58,10 +61,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	public var scaleZ:Float = 1;
 
-	public function new(vertices:Array<Float>, indices:Array<Int>) {
+	public function new(vertices:Array<Float>, indices:Array<Int>, uvs:Array<Float> = null) {
 		super();
 		this.vertices = vertices;
 		this.indices = indices;
+		this.uvs = uvs;
 		this.addEventListener(RenderEvent.RENDER_OPENGL, onRender);
 		this.setFrameEvent(true);
 
@@ -90,6 +94,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 			glBuffer = gl.createBuffer();
 			indexBuffer = gl.createBuffer();
 			colorBuffer = gl.createBuffer();
+			coordBuffer = gl.createBuffer();
 		}
 
 		opengl.setShader(null);
@@ -104,6 +109,10 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(c), gl.STATIC_DRAW);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 		// 创建shader
@@ -177,21 +186,22 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var color = gl.getAttribLocation(shaderProgram, "zy_color");
 		gl.enableVertexAttribArray(color);
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-		gl.vertexAttribPointer(color, 4, gl.FLOAT,false, 0, 0);
+		gl.vertexAttribPointer(color, 4, gl.FLOAT, false, 0, 0);
+
+		// 纹理绑定
+		var coord = gl.getAttribLocation(shaderProgram, "zy_coord");
+		gl.enableVertexAttribArray(coord);
+		gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
+		gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
 
 		// Bind vertex buffer object
 		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
 		// Bind index buffer object
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
-		// Get the attribute location
-		var coord = gl.getAttribLocation(shaderProgram, "zy_coord");
-
-		// Point an attribute to the currently bound VBO
-		gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
-
-		// Enable the attriute
-		gl.enableVertexAttribArray(coord);
+		var pos = gl.getAttribLocation(shaderProgram, "zy_pos");
+		gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(pos);
 
 		/*=========Drawing the triangle===========*/
 
@@ -216,6 +226,15 @@ class DisplayObject3D extends DisplayObjectContainer {
 		gl.enable(gl.DEPTH_TEST);
 		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
+
+		// 绑定纹理
+		if (texture != null) {
+			// @:privateAccess texture.getTexture(stage.context3D).__getGLFramebuffer(true, 3, 0);
+			var glTex:GLTexture = cast @:privateAccess texture.getTexture(stage.context3D).__textureID;
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, glTex);
+			gl.uniform1i(gl.getUniformLocation(shaderProgram, "texture0"), 0);
+		}
 
 		// Clear the color buffer bit
 		// gl.clear(gl.COLOR_BUFFER_BIT);

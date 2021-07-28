@@ -18,9 +18,12 @@ class ObjUtils {
 	public static function parser(data:String):ObjData {
 		var obj:ObjData = {
 			vertexPoint: [],
-			vertexIndex: []
+			vertexIndex: [],
+			uvs: [],
+			uvsIndex: []
 		};
 		var array:Array<String> = data.split("\n");
+		var uvs:Array<Float> = [];
 		for (index => value in array) {
 			var strs = value.split(" ");
 			switch (strs[0]) {
@@ -32,36 +35,81 @@ class ObjUtils {
 				case "f":
 					// 顶点索引
 					parserIndex(obj, strs);
+				case "vt":
+					// 顶点UV
+					uvs.push(Std.parseFloat(strs[1]));
+					uvs.push(Std.parseFloat(strs[2]));
+					uvs.push(Std.parseFloat(strs[3]));
 			}
 		}
-		trace("obj", obj.vertexIndex.length, obj.vertexPoint.length);
+
+		for (index => value in obj.uvsIndex) {
+			obj.uvs.push(uvs[value * 3]);
+			obj.uvs.push(uvs[value * 3 + 1]);
+			obj.uvs.push(uvs[value * 3 + 2]);
+		}
+
+		trace("obj", obj.uvs.length, obj.vertexIndex.length, obj.vertexPoint.length);
 		return obj;
 	}
 
 	public static function parserIndex(data:ObjData, strs:Array<String>):Void {
-		var array:Array<Int> = [];
+		var array:Array<{v:Int, u:Int}> = [];
 		for (i in 1...strs.length) {
 			if (strs[i] == "")
 				continue;
 			var d = strs[i].split("/");
-			array.push(Std.parseInt(d[0]) - 1);
+			array.push({
+				v: Std.parseInt(d[0]) - 1,
+				u: Std.parseInt(d[1]) - 1
+			});
 		}
 		// 解析面
 		var len = array.length;
 		switch (len) {
 			case 5:
+				data.vertexIndex.push(parseIndex(array[0].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[1].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[0].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[3].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[0].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[3].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[4].v, data.vertexPoint.length));
+
+				// UV
+				data.uvsIndex.push(parseIndex(array[0].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[1].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[2].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[0].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[2].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[3].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[0].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[3].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[4].u, data.vertexPoint.length));
 			case 4:
-				data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
-				data.vertexIndex.push(parseIndex(array[1], data.vertexPoint.length));
-				data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
-				data.vertexIndex.push(parseIndex(array[2], data.vertexPoint.length));
-				data.vertexIndex.push(parseIndex(array[3], data.vertexPoint.length));
-				data.vertexIndex.push(parseIndex(array[0], data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[0].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[1].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[0].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[2].v, data.vertexPoint.length));
+				data.vertexIndex.push(parseIndex(array[3].v, data.vertexPoint.length));
+
+				// UV
+				data.uvsIndex.push(parseIndex(array[0].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[1].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[2].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[0].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[2].u, data.vertexPoint.length));
+				data.uvsIndex.push(parseIndex(array[3].u, data.vertexPoint.length));
 			case 3:
 				for (index => value in array) {
-					data.vertexIndex.push(parseIndex(value, data.vertexPoint.length));
+					data.vertexIndex.push(parseIndex(value.v, data.vertexPoint.length));
+					data.uvsIndex.push(parseIndex(value.u, data.vertexPoint.length));
 				}
 		}
+
 	}
 
 	/**
@@ -79,4 +127,6 @@ typedef ObjData = {
 	public var vertexPoint:Array<Float>;
 
 	public var vertexIndex:Array<Int>;
+	public var uvs:Array<Float>;
+	public var uvsIndex:Array<Int>;
 }
