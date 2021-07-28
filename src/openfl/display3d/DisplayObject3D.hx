@@ -40,6 +40,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 */
 	private var glBuffer:GLBuffer;
 
+	private var colorBuffer:GLBuffer;
+
 	/**
 	 * 顶点索引数据
 	 */
@@ -64,12 +66,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 		this.setFrameEvent(true);
 
 		for (i in 0...vertices.length) {
-			// var r = Math.random();
-			// var g = Math.random();
-			// var b = Math.random();
-			var r = 1;
-			var g = 0;
-			var b = 0;
+			var r = Math.random();
+			var g = Math.random();
+			var b = Math.random();
 			for (i in 0...4) {
 				c.push(r);
 				c.push(g);
@@ -90,17 +89,22 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (glBuffer == null) {
 			glBuffer = gl.createBuffer();
 			indexBuffer = gl.createBuffer();
+			colorBuffer = gl.createBuffer();
 		}
 
 		opengl.setShader(null);
 		// 绑定传入顶点数据
 		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices.concat(c)), gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		// 绑定传入索引数据
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new UInt16Array(indices), gl.STATIC_DRAW);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(c), gl.STATIC_DRAW);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 		// 创建shader
 		/*================ Shaders ====================*/
@@ -172,12 +176,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 		// 绑定属性
 		var color = gl.getAttribLocation(shaderProgram, "zy_color");
 		gl.enableVertexAttribArray(color);
+		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+		gl.vertexAttribPointer(color, 4, gl.FLOAT,false, 0, 0);
 
 		// Bind vertex buffer object
 		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
-
-		gl.vertexAttribPointer(color, 4, gl.FLOAT, false, 0, 0);
-
 		// Bind index buffer object
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
