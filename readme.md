@@ -1,6 +1,7 @@
 ## OpenFL-3D
 
-在OpenFL渲染层上支持3D渲染，与普通的渲染对象一起渲染，该库仍然在开发当中，如有问题，可以创建问题。
+在OpenFL渲染层上支持3D渲染，与普通的渲染对象一起渲染，该库仍然在开发当中，如有问题，可以创建问题。该库仍然在开发中，可能无法正常运行或者编译。
+3D rendering is supported on the OpenFL rendering layer, which is rendered together with ordinary rendering objects. The library is still under development. If you have any problems, you can create problems. The library is still under development and may not run or compile normally.
 
 ## 例子
 
