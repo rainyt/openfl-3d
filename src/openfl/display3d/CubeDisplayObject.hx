@@ -1,4 +1,4 @@
-package zygame.display3d;
+package openfl.display3d;
 
 /**
  * 立方体3D对象

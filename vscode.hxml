@@ -1,0 +1,5 @@
+--library openfl
+--library lime
+--library vector-math
+--library openfl-glsl
+--class-path src

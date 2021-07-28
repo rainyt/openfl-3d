@@ -1,4 +1,4 @@
-package zygame.display3d;
+package openfl.display3d;
 
 import lime.math.Vector4;
 import lime.math.Matrix4;

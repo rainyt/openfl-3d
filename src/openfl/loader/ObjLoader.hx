@@ -1,5 +1,6 @@
-package zygame.loader;
+package openfl.loader;
 
+import openfl.Assets;
 import zygame.utils.AssetsUtils;
 
 /**
