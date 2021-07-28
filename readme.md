@@ -35,7 +35,7 @@ this.addChild(quadTop);
 
 ## 注意
 
-OpenFL需要开启`<haxedef name="openfl_disable_context_cache"/>`才能正常渲染。
+OpenFL需要开启`<haxedef name="openfl_disable_context_cache"/>`才能正常渲染，并且它只能在OpenGL上使用（包含WebGL），也就是说，不能在Flash平台上使用。
 
 ## 路线图
 
