@@ -12,9 +12,9 @@ import zygame.data.Vertex;
 class OBJParser extends Object3DBaseData {
 	public var faces:Array<FaceData> = [];
 
-    private var _realIndices:Map<String, Int>;
+	private var _realIndices:Map<String, Int>;
 
-    private var _vertexIndex:Int = 0;
+	private var _vertexIndex:Int = 0;
 
 	public function new(data:String) {
 		super();
@@ -139,8 +139,8 @@ class OBJParser extends Object3DBaseData {
 	 * @param geometry The Geometry to contain the converted SubGeometry.
 	 */
 	private function translateMaterialGroup():Void {
-        _realIndices = [];
-        _vertexIndex = 0;
+		_realIndices = [];
+		_vertexIndex = 0;
 		var numFaces:UInt = faces.length;
 		for (i in 0...numFaces) {
 			var face = faces[i];
@@ -152,7 +152,6 @@ class OBJParser extends Object3DBaseData {
 				translateVertexData(face, j + 1, verticesArray, uvsArray, indicesArray, normals);
 			}
 		}
-        trace(verticesArray,uvsArray,indicesArray);
 	}
 
 	private function translateVertexData(face:FaceData, vertexIndex:Int, vertices:Vector<Float>, uvs:Vector<Float>, indices:Vector<UInt>,
