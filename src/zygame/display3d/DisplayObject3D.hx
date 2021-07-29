@@ -1,5 +1,9 @@
 package zygame.display3d;
 
+import openfl.display3D.IndexBuffer3D;
+import openfl.Lib;
+import openfl.display3D.Context3DBufferUsage;
+import openfl.display3D.VertexBuffer3D;
 import openfl.display3D.Context3DTextureFilter;
 import openfl.display3D.Context3DWrapMode;
 import openfl.display3D.Context3DMipFilter;
@@ -41,18 +45,14 @@ class DisplayObject3D extends DisplayObjectContainer {
 	public var uvs:Array<Float>;
 
 	/**
-	 * 顶点数据
+	 * 顶点缓冲区
 	 */
-	private var glBuffer:GLBuffer;
-
-	private var colorBuffer:GLBuffer;
-
-	private var coordBuffer:GLBuffer;
+	public var vertexBuffer:VertexBuffer3D;
 
 	/**
-	 * 顶点索引数据
+	 * 三角形绘制数据
 	 */
-	private var indexBuffer:GLBuffer;
+	public var indexBuffer:IndexBuffer3D;
 
 	/**
 	 * 着色器
@@ -69,21 +69,38 @@ class DisplayObject3D extends DisplayObjectContainer {
 		super();
 		this.vertices = vertices;
 		this.indices = indices;
+		trace("indices=", indices.length);
 		this.uvs = uvs;
+		var context = Lib.application.window.stage.context3D;
+		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 9);
+		indexBuffer = context.createIndexBuffer(this.indices.length);
+		indexBuffer.uploadFromTypedArray(new UInt16Array(indices));
+
 		this.addEventListener(RenderEvent.RENDER_OPENGL, onRender);
 		this.setFrameEvent(true);
 
-		for (i in 0...vertices.length) {
+		var buffers:openfl.Vector<Float> = new openfl.Vector();
+
+		var num = Std.int(this.vertices.length / 3);
+		for (i in 0...num) {
+			buffers.push(vertices[i * 3]);
+			buffers.push(vertices[i * 3 + 1]);
+			buffers.push(vertices[i * 3 + 2]);
+			// 颜色
 			var r = Math.random();
 			var g = Math.random();
 			var b = Math.random();
-			for (i in 0...4) {
-				c.push(r);
-				c.push(g);
-				c.push(b);
-				c.push(1);
-			}
+			buffers.push(r);
+			buffers.push(g);
+			buffers.push(b);
+			buffers.push(1);
+			// 纹理
+			buffers.push(uvs[i * 2]);
+			buffers.push(uvs[i * 2 + 1]);
 		}
+		trace("vertices=",vertices);
+		trace("buffers=",buffers);
+		vertexBuffer.uploadFromVector(buffers, 0, num);
 	}
 
 	override function onFrame() {
@@ -94,30 +111,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 	public function onRender(e:RenderEvent):Void {
 		var opengl:OpenGLRenderer = cast e.renderer;
 		var gl = opengl.gl;
-		if (glBuffer == null) {
-			glBuffer = gl.createBuffer();
-			indexBuffer = gl.createBuffer();
-			colorBuffer = gl.createBuffer();
-			coordBuffer = gl.createBuffer();
-		}
+		var context = Lib.application.window.stage.context3D;
 
 		opengl.setShader(null);
-		// 绑定传入顶点数据
-		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-		// 绑定传入索引数据
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new UInt16Array(indices), gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(c), gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 		// 创建shader
 		/*================ Shaders ====================*/
@@ -187,25 +183,16 @@ class DisplayObject3D extends DisplayObjectContainer {
 		/*======= Associating shaders to buffer objects =======*/
 
 		// 绑定属性
+		// vertexBuffer.uploadFromTypedArray(new Float32Array(vertices.concat(c).concat(uvs)));
+		var pos = gl.getAttribLocation(shaderProgram, "zy_pos");
+		context.setVertexBufferAt(pos, vertexBuffer, 0, FLOAT_3);
+
 		var color = gl.getAttribLocation(shaderProgram, "zy_color");
-		gl.enableVertexAttribArray(color);
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-		gl.vertexAttribPointer(color, 4, gl.FLOAT, false, 0, 0);
+		context.setVertexBufferAt(color, vertexBuffer, 3, FLOAT_4);
 
 		// 纹理绑定
 		var coord = gl.getAttribLocation(shaderProgram, "zy_coord");
-		gl.enableVertexAttribArray(coord);
-		gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
-		gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
-
-		// Bind vertex buffer object
-		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
-		// Bind index buffer object
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-		var pos = gl.getAttribLocation(shaderProgram, "zy_pos");
-		gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(pos);
+		context.setVertexBufferAt(coord, vertexBuffer, 7, FLOAT_2);
 
 		/*=========Drawing the triangle===========*/
 
@@ -233,26 +220,10 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		// 绑定纹理
 		if (texture != null) {
-			var glTex = cast @:privateAccess texture.getTexture(stage.context3D);
-			stage.context3D.setTextureAt(0,glTex);
-			// Add it
-			@:privateAccess  stage.context3D.__flushGLTextures();
-			gl.activeTexture(gl.TEXTURE0);
-			gl.bindTexture(gl.TEXTURE_2D,  @:privateAccess  glTex.__getTexture());
-			gl.uniform1i(gl.getUniformLocation(shaderProgram, "texture0"), 0);
+			var glTex = texture.getTexture(context);
+			context.setTextureAt(0, glTex);
 		}
-
-		// Clear the color buffer bit
-		// gl.clear(gl.COLOR_BUFFER_BIT);
-		// gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-		// Draw the triangle
-		gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-		opengl.setShader(this.__worldShader);
-		@:privateAccess opengl.__context3D.__flushGL();
+		context.drawTriangles(indexBuffer);
 
 		gl.disable(gl.DEPTH_TEST);
 		gl.depthMask(false);
