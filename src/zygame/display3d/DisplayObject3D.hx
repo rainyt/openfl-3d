@@ -60,8 +60,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 */
 	private var shaderProgram:GLProgram;
 
-	private var r:Float = 0;
-
 	private var c = [];
 
 	public var scaleZ:Float = 1;
@@ -209,7 +207,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 		m.appendRotation(rotationX, new Vector4(1, 0, 0, 0));
 		m.appendRotation(rotationY, new Vector4(0, 1, 0, 0));
 		m.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
-		r += 1;
 
 		var p = new Matrix4();
 		@:privateAccess p.createOrtho(0, getStageWidth(), getStageHeight(), 0, -1000, 1000);

@@ -14,9 +14,9 @@ class Object3DBaseData {
 	public var uvs:Array<UV> = [];
 
 	/**
-	 * 法线，未支持
+	 * 法线
 	 */
-	public var vertexNormals:Array<Dynamic>;
+	public var vertexNormals:Array<Vertex> = [];
 
 	/**
 	 * 顶点索引
@@ -26,6 +26,8 @@ class Object3DBaseData {
 	public var uvsArray:Vector<Float> = new Vector();
 
 	public var verticesArray:Vector<Float> = new Vector();
+
+    public var vertexNormalsArray:Vector<Float> = new Vector();
 
 	public function new() {}
 

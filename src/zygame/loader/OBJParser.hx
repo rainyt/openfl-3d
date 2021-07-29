@@ -52,10 +52,28 @@ class OBJParser extends Object3DBaseData {
 			case "vt":
 				parseUV(trunk);
 			case "vn":
-			// parseVertexNormal(trunk);
+				parseVertexNormal(trunk);
 			case "f":
 				parseFace(trunk);
 		}
+	}
+
+	/**
+	 * Reads the next vertex normal coordinates.
+	 * @param trunk The data block containing the vertex normal tag and its parameters
+	 */
+	private function parseVertexNormal(trunk:Array<String>):Void {
+		if (trunk.length > 4) {
+			var nTrunk:Array<Float> = [];
+			var val:Float;
+			for (i in 1...trunk.length) {
+				val = Std.parseFloat(trunk[i]);
+				if (!Math.isNaN(val))
+					nTrunk.push(val);
+			}
+			vertexNormals.push(new Vertex(nTrunk[0], nTrunk[1], -nTrunk[2]));
+		} else
+			vertexNormals.push(new Vertex(Std.parseFloat(trunk[1]), Std.parseFloat(trunk[2]), -Std.parseFloat(trunk[3])));
 	}
 
 	/**
@@ -114,8 +132,8 @@ class OBJParser extends Object3DBaseData {
 			face.vertexIndices.push(parseIndex(Std.parseInt(indices[0]), vertices.length));
 			if (indices[1] != null && indices[1].length > 0)
 				face.uvIndices.push(parseIndex(Std.parseInt(indices[1]), uvs.length));
-			// if (indices[2] != null && indices[2].length > 0)
-			// 	face.normalIndices.push(parseIndex(Std.parseInt(indices[2]), _vertexNormals.length));
+			if (indices[2] != null && indices[2].length > 0)
+				face.normalIndices.push(parseIndex(Std.parseInt(indices[2]), vertexNormals.length));
 			face.indexIds.push(trunk[i]);
 		}
 
@@ -145,11 +163,10 @@ class OBJParser extends Object3DBaseData {
 		for (i in 0...numFaces) {
 			var face = faces[i];
 			var numVerts = face.indexIds.length - 1;
-			var normals = null;
 			for (j in 1...numVerts) {
-				translateVertexData(face, j, verticesArray, uvsArray, indicesArray, normals);
-				translateVertexData(face, 0, verticesArray, uvsArray, indicesArray, normals);
-				translateVertexData(face, j + 1, verticesArray, uvsArray, indicesArray, normals);
+				translateVertexData(face, j, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
+				translateVertexData(face, 0, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
+				translateVertexData(face, j + 1, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
 			}
 		}
 	}
@@ -165,16 +182,22 @@ class OBJParser extends Object3DBaseData {
 			index = _vertexIndex;
 			_realIndices.set(face.indexIds[vertexIndex], ++_vertexIndex);
 			vertex = this.vertices[face.vertexIndices[vertexIndex] - 1];
-			vertices.push(vertex.x * 1);
-			vertices.push(vertex.y * 1);
-			vertices.push(vertex.z * 1);
+			vertices.push(vertex.x);
+			vertices.push(vertex.y);
+			vertices.push(vertex.z);
 
-			// if (face.normalIndices.length > 0) {
-			// 	vertexNormal = _vertexNormals[face.normalIndices[vertexIndex] - 1];
-			// 	normals.push(vertexNormal.x);
-			// 	normals.push(vertexNormal.y);
-			// 	normals.push(vertexNormal.z);
-			// }
+			if (face.normalIndices.length > 0) {
+				vertexNormal = vertexNormals[face.normalIndices[vertexIndex] - 1];
+				if (vertexNormal == null) {
+					normals.push(0);
+					normals.push(0);
+					normals.push(0);
+				} else {
+					normals.push(vertexNormal.x);
+					normals.push(vertexNormal.y);
+					normals.push(vertexNormal.z);
+				}
+			}
 
 			if (face.uvIndices.length > 0) {
 				try {
