@@ -1,11 +1,13 @@
 package zygame.display3d;
 
+import openfl.Vector;
+
 /**
  * 立方体3D对象
  */
 class CubeDisplayObject extends DisplayObject3D {
 	public function new() {
-		var v = [
+		var v:Vector<Float> = new Vector([
 			// 正面
 			- 1.0,
 			-1.0,
@@ -89,8 +91,8 @@ class CubeDisplayObject extends DisplayObject3D {
 			-1.0,
 			1.0,
 			-1.0
-		];
-		var i = [
+		]);
+		var i:Vector<UInt> = new Vector([
 			0,
 			1,
 			2,
@@ -127,9 +129,9 @@ class CubeDisplayObject extends DisplayObject3D {
 			20,
 			22,
 			23 // 左面
-		];
+		]);
 
-		var uvs = [
+		var uvs:Vector<Float> = new Vector([
 			// 正面
 			0.0,
 			0.0,
@@ -189,7 +191,7 @@ class CubeDisplayObject extends DisplayObject3D {
 			1.0,
 			0.0,
 			1.0,
-		];
+		]);
 
 		super(v, i, uvs);
 	}

@@ -18,6 +18,7 @@ import lime.utils.Float32Array;
 import openfl.display.OpenGLRenderer;
 import zygame.display.DisplayObjectContainer;
 import openfl.events.RenderEvent;
+import openfl.Vector;
 
 /**
  * 3D显示对象
@@ -32,17 +33,17 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 顶点坐标
 	 */
-	public var vertices:Array<Float>;
+	public var vertices:Vector<Float>;
 
 	/**
 	 * 顶点索引
 	 */
-	public var indices:Array<Int>;
+	public var indices:Vector<Int>;
 
 	/**
 	 * UV坐标
 	 */
-	public var uvs:Array<Float>;
+	public var uvs:Vector<Float>;
 
 	/**
 	 * 顶点缓冲区
@@ -65,7 +66,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	public var scaleZ:Float = 1;
 
-	public function new(vertices:Array<Float>, indices:Array<Int>, uvs:Array<Float> = null) {
+	public function new(vertices:Vector<Float>, indices:Vector<Int>, uvs:Vector<Float> = null) {
 		super();
 		this.vertices = vertices;
 		this.indices = indices;
