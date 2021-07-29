@@ -66,11 +66,16 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	public var scaleZ:Float = 1;
 
+	public var rotationX:Float = 0;
+
+	public var rotationY:Float = 0;
+
+	public var rotationZ:Float = 0;
+
 	public function new(vertices:Vector<Float>, indices:Vector<Int>, uvs:Vector<Float> = null) {
 		super();
 		this.vertices = vertices;
 		this.indices = indices;
-		trace("indices=", indices.length);
 		this.uvs = uvs;
 		var context = Lib.application.window.stage.context3D;
 		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 9);
@@ -99,8 +104,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 			buffers.push(uvs[i * 2]);
 			buffers.push(uvs[i * 2 + 1]);
 		}
-		trace("vertices=",vertices);
-		trace("buffers=",buffers);
 		vertexBuffer.uploadFromVector(buffers, 0, num);
 	}
 
@@ -203,8 +206,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var m = new Matrix4();
 		// m.appendScale(100, 100, 100);
 		m.appendScale(this.scaleX, this.scaleY, this.scaleZ);
-		m.appendRotation(r, new Vector4(0, 0, 1, 0));
-		m.appendRotation(r, new Vector4(0, 1, 0, 0));
+		m.appendRotation(rotationX, new Vector4(1, 0, 0, 0));
+		m.appendRotation(rotationY, new Vector4(0, 1, 0, 0));
+		m.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
 		r += 1;
 
 		var p = new Matrix4();
