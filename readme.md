@@ -18,7 +18,7 @@ this.addChild(d3d);
 d3d.x = getStageWidth() / 2;
 d3d.y = getStageHeight() / 2;
 
-// 2D, not visible.
+// 2D
 var quadTop = new ZQuad();
 quadTop.width = getStageWidth() / 2;
 quadTop.height = getStageHeight() / 2;
@@ -32,10 +32,6 @@ this.addChild(quadTop);
 - openfl 9.1.x+
 - openfl-glsl
 - lime
-
-## 注意
-
-OpenFL需要开启`<haxedef name="openfl_disable_context_cache"/>`才能正常渲染，并且它只能在OpenGL上使用（包含WebGL），也就是说，不能在Flash平台上使用。
 
 ## 路线图
 
