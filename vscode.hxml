@@ -3,3 +3,6 @@
 --library vector-math
 --library openfl-glsl
 --class-path src
+--class-path test
+--main FBXTest
+--interp
