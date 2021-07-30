@@ -25,4 +25,15 @@ class Object3DBaseData {
 	public function getGeometry(name:String):GeometryData {
 		return geometrys.get(name);
 	}
+
+	public function getGeometryAt(arg0:Int):GeometryData {
+		var k = geometrys.keys();
+		for (s in k) {
+			arg0 --;
+			if(arg0 < 0){
+				return getGeometry(s);
+			}
+		}
+		return null;
+	}
 }

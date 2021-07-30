@@ -229,7 +229,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		#else
 		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
 		#end
-		m.appendTranslation(this.x, this.y, 0);
+		@:privateAccess m.appendTranslation(this.__worldTransform.tx, this.__worldTransform.ty, 0);
 
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);

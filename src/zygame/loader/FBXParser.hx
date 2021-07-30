@@ -333,6 +333,8 @@ class FBXParser extends Object3DBaseData {
 			}
 		return pl;
 	}
+
+	
 }
 
 class FBXJoint {
