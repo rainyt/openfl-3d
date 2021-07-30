@@ -206,6 +206,7 @@ class OBJParser extends Object3DBaseData {
 			if (face.uvIndices.length > 0) {
 				try {
 					uv = this._geometry.uvs[face.uvIndices[vertexIndex] - 1];
+					trace("解析uv:",uv,face.uvIndices.length);
 					uvs.push(uv.u);
 					uvs.push(uv.v);
 				} catch (e:Error) {

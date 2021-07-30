@@ -56,9 +56,6 @@ class FBXParser extends Object3DBaseData {
 				// 解析模型
 				for (c in child.childs) {
 					parsingObject(c);
-					if (child.name == "Geometry") {
-						break;
-					}
 				}
 		}
 	}
@@ -69,17 +66,21 @@ class FBXParser extends Object3DBaseData {
 			for (index => value in child.childs.keyValueIterator()) {
 				trace(value.name);
 			}
-			trace(child.get("Vertices").getFloats());
-			trace(child.get("PolygonVertexIndex").getInts());
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
 			// 获取索引
 			var array = child.get("PolygonVertexIndex").getInts();
+			trace("array=", array, array.length);
 			var indices = [];
+			var uvIndices = [];
+			var uvIndicesArray:Array<UInt> = [];
+			var uvIndexs = child.get("LayerElementUV.UVIndex").getInts();
 			for (index => value in array) {
+				uvIndices.push(uvIndexs[index]);
 				if (value < 0) {
-					indices.push(-value - 1);
+					array[index] = -value - 1;
+					indices.push(array[index]);
 					// 开始写入顶点
 					switch (indices.length) {
 						case 4:
@@ -90,16 +91,39 @@ class FBXParser extends Object3DBaseData {
 							geomtry.indicesArray.push(indices[0]);
 							geomtry.indicesArray.push(indices[2]);
 							geomtry.indicesArray.push(indices[3]);
+
+							uvIndicesArray.push(uvIndices[0]);
+							uvIndicesArray.push(uvIndices[1]);
+							uvIndicesArray.push(uvIndices[2]);
+							uvIndicesArray.push(uvIndices[0]);
+							uvIndicesArray.push(uvIndices[2]);
+							uvIndicesArray.push(uvIndices[3]);
 						case 3:
 							// 3边形
 							geomtry.indicesArray.push(indices[0]);
 							geomtry.indicesArray.push(indices[1]);
 							geomtry.indicesArray.push(indices[2]);
+
+							uvIndicesArray.push(uvIndices[0]);
+							uvIndicesArray.push(uvIndices[1]);
+							uvIndicesArray.push(uvIndices[2]);
 					}
 					indices = [];
+					uvIndices = [];
 				} else
 					indices.push(value);
 			}
+			// 获取UV
+			var uvs = child.get("LayerElementUV.UV").getFloats();
+
+			for (index => value in uvIndicesArray) {
+				var vIdx = geomtry.indicesArray[index];
+				if (geomtry.uvsArray[vIdx * 2] == null) {
+					geomtry.uvsArray[vIdx * 2] = uvs[value * 2];
+					geomtry.uvsArray[vIdx * 2 + 1] = 1 - uvs[value * 2 + 1];
+				}
+			}
+
 			this.setGeometry("main", geomtry);
 		}
 	}
