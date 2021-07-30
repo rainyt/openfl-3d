@@ -51,18 +51,29 @@ class FBXParser extends Object3DBaseData {
 		switch (type) {
 			case "Objects":
 				// 解析模型
-				for (c in child.childs) {
-					parsingObject(c);
+				var geometrys = child.getAll("Geometry");
+				for (g in geometrys) {
+					parsingGeometry(g);
 				}
+				var animationCurveNodes = child.getAll("AnimationCurveNode");
+				for (a in animationCurveNodes) {
+					parsingAnimate(a);
+					break;
+				}
+				// for (c in child.childs) {
+				// parsingObject(c);
+				// }
 		}
 	}
 
-	private function parsingObject(child:FbxNode) {
+	private function parsingAnimate(child:FbxNode):Void {
+		for (c in child.childs) {
+			trace(c);
+		}
+	}
+
+	private function parsingGeometry(child:FbxNode) {
 		if (child.name == "Geometry") {
-            trace("解析：",child.getType());
-			for (index => value in child.childs.keyValueIterator()) {
-				// trace(value.name);
-			}
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
@@ -70,6 +81,7 @@ class FBXParser extends Object3DBaseData {
 			var array = child.get("PolygonVertexIndex").getInts();
 			var indices = [];
 			var uvIndices = [];
+			// UV索引对应
 			var uvIndicesArray:Array<UInt> = [];
 			var uvIndexs = child.get("LayerElementUV.UVIndex").getInts();
 			for (index => value in array) {

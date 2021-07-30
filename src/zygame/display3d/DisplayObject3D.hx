@@ -16,7 +16,11 @@ import lime.graphics.opengl.GLBuffer;
 import lime.utils.UInt16Array;
 import lime.utils.Float32Array;
 import openfl.display.OpenGLRenderer;
+#if zygame
 import zygame.display.DisplayObjectContainer;
+#else
+import openfl.display.DisplayObjectContainer;
+#end
 import openfl.events.RenderEvent;
 import openfl.Vector;
 
@@ -81,7 +85,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 		indexBuffer.uploadFromTypedArray(new UInt16Array(indices));
 
 		this.addEventListener(RenderEvent.RENDER_OPENGL, onRender);
+		#if zygame
 		this.setFrameEvent(true);
+		#end
 
 		var buffers:openfl.Vector<Float> = new openfl.Vector();
 
@@ -108,14 +114,16 @@ class DisplayObject3D extends DisplayObjectContainer {
 			}
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
-		trace("buffers=",buffers);
-		trace("indices=",indices);
+		trace("buffers=", buffers);
+		trace("indices=", indices);
 	}
 
+	#if zygame
 	override function onFrame() {
 		super.onFrame();
 		this.invalidate();
 	}
+	#end
 
 	public function onRender(e:RenderEvent):Void {
 		var opengl:OpenGLRenderer = cast e.renderer;
@@ -216,7 +224,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 		m.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
 
 		var p = new Matrix4();
+		#if zygame
 		@:privateAccess p.createOrtho(0, getStageWidth(), getStageHeight(), 0, -1000, 1000);
+		#else
+		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
+		#end
 		m.appendTranslation(this.x, this.y, 0);
 
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
@@ -238,8 +250,14 @@ class DisplayObject3D extends DisplayObjectContainer {
 		gl.depthMask(false);
 	}
 
-	override function scale(f:Float):DisplayObjectContainer {
+	#if zygame override #else public #end function scale(f:Float):DisplayObjectContainer {
 		this.scaleZ = f;
+		#if zygame
 		return super.scale(f);
+		#else
+		this.scaleX = f;
+		this.scaleY = f;
+		return this;
+		#end
 	}
 }
