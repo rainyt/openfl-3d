@@ -33,6 +33,13 @@ this.addChild(quadTop);
 - openfl-glsl
 - lime
 
+## 当前已支持
+- 3D模型渲染，可以跟2D混合渲染
+- OBJ模型读取
+- FBX模型读取
+- 纹理UV映射
+- 角度XYZ
+
 ## 路线图
 
 1. 支持在2D层之间渲染3D对象。
