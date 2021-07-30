@@ -40,9 +40,6 @@ class FBXParser extends Object3DBaseData {
 				break;
 			}
 
-		trace("version=", version);
-		trace("isMaya=", isMaya);
-
 		for (child in root.childs) {
 			init(child);
 		}
@@ -62,16 +59,15 @@ class FBXParser extends Object3DBaseData {
 
 	private function parsingObject(child:FbxNode) {
 		if (child.name == "Geometry") {
-			trace(child.name);
+            trace("解析：",child.getType());
 			for (index => value in child.childs.keyValueIterator()) {
-				trace(value.name);
+				// trace(value.name);
 			}
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
 			// 获取索引
 			var array = child.get("PolygonVertexIndex").getInts();
-			trace("array=", array, array.length);
 			var indices = [];
 			var uvIndices = [];
 			var uvIndicesArray:Array<UInt> = [];
@@ -124,7 +120,7 @@ class FBXParser extends Object3DBaseData {
 				}
 			}
 
-			this.setGeometry("main", geomtry);
+			this.setGeometry("g" + child.getId(), geomtry);
 		}
 	}
 }

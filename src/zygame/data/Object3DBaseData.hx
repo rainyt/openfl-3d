@@ -13,6 +13,7 @@ class Object3DBaseData {
 	 * @param geometry 
 	 */
 	public function setGeometry(name:String, geometry:GeometryData):Void {
+		trace("add Geometry:",name);
 		geometrys.set(name, geometry);
 	}
 
