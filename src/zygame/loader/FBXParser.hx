@@ -41,8 +41,32 @@ class FBXParser extends Object3DBaseData {
 		trace("version=", version);
 		trace("isMaya=", isMaya);
 
-        for (child in root.childs) {
-            trace("init",child.name);
-        }
+		for (child in root.childs) {
+			init(child);
+		}
+	}
+
+	private function init(child:FbxNode) {
+		trace("init", child.name);
+		var type = child.name;
+		switch (type) {
+			case "Objects":
+				// 解析模型
+				for (c in child.childs) {
+					parsingObject(c);
+				}
+		}
+	}
+
+	private function parsingObject(child:FbxNode) {
+		if (child.name == "Geometry") {
+			trace(child.name);
+			for (index => value in child.childs.keyValueIterator()) {
+				trace(value.name);
+			}
+			trace(child.get("Vertices").props[0].getParameters()[0]);
+            trace(child.get("PolygonVertexIndex").props[0].getParameters()[0]);
+            
+		}
 	}
 }

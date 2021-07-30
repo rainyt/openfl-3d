@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import zygame.data.GeometryData;
 import haxe.macro.Expr.Error;
 import openfl.Vector;
 import zygame.data.Object3DBaseData;
@@ -16,6 +17,8 @@ class OBJParser extends Object3DBaseData {
 
 	private var _vertexIndex:Int = 0;
 
+	private var _geometry:GeometryData = new GeometryData();
+
 	public function new(data:String) {
 		super();
 		var datas = data.split("\n");
@@ -23,6 +26,7 @@ class OBJParser extends Object3DBaseData {
 			parseLine(value.split(" "));
 		}
 		translateMaterialGroup();
+		this.setGeometry("main", _geometry);
 	}
 
 	/**
@@ -71,9 +75,9 @@ class OBJParser extends Object3DBaseData {
 				if (!Math.isNaN(val))
 					nTrunk.push(val);
 			}
-			vertexNormals.push(new Vertex(nTrunk[0], nTrunk[1], -nTrunk[2]));
+			_geometry.vertexNormals.push(new Vertex(nTrunk[0], nTrunk[1], -nTrunk[2]));
 		} else
-			vertexNormals.push(new Vertex(Std.parseFloat(trunk[1]), Std.parseFloat(trunk[2]), -Std.parseFloat(trunk[3])));
+			_geometry.vertexNormals.push(new Vertex(Std.parseFloat(trunk[1]), Std.parseFloat(trunk[2]), -Std.parseFloat(trunk[3])));
 	}
 
 	/**
@@ -90,9 +94,9 @@ class OBJParser extends Object3DBaseData {
 				if (!Math.isNaN(val))
 					nTrunk.push(val);
 			}
-			vertices.push(new Vertex(nTrunk[0], nTrunk[1], -nTrunk[2]));
+			_geometry.vertices.push(new Vertex(nTrunk[0], nTrunk[1], -nTrunk[2]));
 		} else
-			vertices.push(new Vertex(Std.parseFloat(trunk[1]), Std.parseFloat(trunk[2]), -Std.parseFloat(trunk[3])));
+			_geometry.vertices.push(new Vertex(Std.parseFloat(trunk[1]), Std.parseFloat(trunk[2]), -Std.parseFloat(trunk[3])));
 	}
 
 	/**
@@ -108,9 +112,9 @@ class OBJParser extends Object3DBaseData {
 				if (!Math.isNaN(val))
 					nTrunk.push(val);
 			}
-			uvs.push(new UV(nTrunk[0], 1 - nTrunk[1]));
+			_geometry.uvs.push(new UV(nTrunk[0], 1 - nTrunk[1]));
 		} else
-			uvs.push(new UV(Std.parseFloat(trunk[1]), 1 - Std.parseFloat(trunk[2])));
+			_geometry.uvs.push(new UV(Std.parseFloat(trunk[1]), 1 - Std.parseFloat(trunk[2])));
 	}
 
 	/**
@@ -129,11 +133,11 @@ class OBJParser extends Object3DBaseData {
 			if (trunk[i] == "")
 				continue;
 			indices = trunk[i].split("/");
-			face.vertexIndices.push(parseIndex(Std.parseInt(indices[0]), vertices.length));
+			face.vertexIndices.push(parseIndex(Std.parseInt(indices[0]), _geometry.vertices.length));
 			if (indices[1] != null && indices[1].length > 0)
-				face.uvIndices.push(parseIndex(Std.parseInt(indices[1]), uvs.length));
+				face.uvIndices.push(parseIndex(Std.parseInt(indices[1]), _geometry.uvs.length));
 			if (indices[2] != null && indices[2].length > 0)
-				face.normalIndices.push(parseIndex(Std.parseInt(indices[2]), vertexNormals.length));
+				face.normalIndices.push(parseIndex(Std.parseInt(indices[2]), _geometry.vertexNormals.length));
 			face.indexIds.push(trunk[i]);
 		}
 
@@ -164,9 +168,9 @@ class OBJParser extends Object3DBaseData {
 			var face = faces[i];
 			var numVerts = face.indexIds.length - 1;
 			for (j in 1...numVerts) {
-				translateVertexData(face, j, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
-				translateVertexData(face, 0, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
-				translateVertexData(face, j + 1, verticesArray, uvsArray, indicesArray, vertexNormalsArray);
+				translateVertexData(face, j, _geometry.verticesArray, _geometry.uvsArray, _geometry.indicesArray, _geometry.vertexNormalsArray);
+				translateVertexData(face, 0, _geometry.verticesArray, _geometry.uvsArray, _geometry.indicesArray, _geometry.vertexNormalsArray);
+				translateVertexData(face, j + 1, _geometry.verticesArray, _geometry.uvsArray, _geometry.indicesArray, _geometry.vertexNormalsArray);
 			}
 		}
 	}
@@ -181,13 +185,13 @@ class OBJParser extends Object3DBaseData {
 		if (!_realIndices.exists(face.indexIds[vertexIndex])) {
 			index = _vertexIndex;
 			_realIndices.set(face.indexIds[vertexIndex], ++_vertexIndex);
-			vertex = this.vertices[face.vertexIndices[vertexIndex] - 1];
+			vertex = this._geometry.vertices[face.vertexIndices[vertexIndex] - 1];
 			vertices.push(vertex.x);
 			vertices.push(vertex.y);
 			vertices.push(vertex.z);
 
 			if (face.normalIndices.length > 0) {
-				vertexNormal = vertexNormals[face.normalIndices[vertexIndex] - 1];
+				vertexNormal = _geometry.vertexNormals[face.normalIndices[vertexIndex] - 1];
 				if (vertexNormal == null) {
 					normals.push(0);
 					normals.push(0);
@@ -201,7 +205,7 @@ class OBJParser extends Object3DBaseData {
 
 			if (face.uvIndices.length > 0) {
 				try {
-					uv = this.uvs[face.uvIndices[vertexIndex] - 1];
+					uv = this._geometry.uvs[face.uvIndices[vertexIndex] - 1];
 					uvs.push(uv.u);
 					uvs.push(uv.v);
 				} catch (e:Error) {

@@ -3,69 +3,25 @@ package zygame.data;
 import openfl.Vector;
 
 class Object3DBaseData {
-	/**
-	 * 顶点数组数据
-	 */
-	public var vertices:Array<Vertex> = [];
-
-	/**
-	 * 纹理数据
-	 */
-	public var uvs:Array<UV> = [];
-
-	/**
-	 * 法线
-	 */
-	public var vertexNormals:Array<Vertex> = [];
-
-	/**
-	 * 顶点索引
-	 */
-	public var indicesArray:Vector<UInt> = new Vector();
-
-	public var uvsArray:Vector<Float> = new Vector();
-
-	public var verticesArray:Vector<Float> = new Vector();
-
-    public var vertexNormalsArray:Vector<Float> = new Vector();
+	private var geometrys:Map<String, GeometryData> = [];
 
 	public function new() {}
 
 	/**
-	 * 获取顶点坐标的数组
-	 * @return Array<Float>
+	 * 根据名字绑定模型形状
+	 * @param name 
+	 * @param geometry 
 	 */
-	public function getVertices():Vector<Float> {
-		if (verticesArray.length == 0) {
-			var array:Vector<Float> = new Vector();
-			for (index => value in vertices) {
-				array.push(value.x);
-				array.push(value.y);
-				array.push(value.z);
-			}
-			return array;
-		}
-		return verticesArray;
+	public function setGeometry(name:String, geometry:GeometryData):Void {
+		geometrys.set(name, geometry);
 	}
 
 	/**
-	 * 获取顶点索引
-	 * @return Array<Int>
+	 * 根据名字获取模型形状
+	 * @param name 
+	 * @return Geometry
 	 */
-	public function getIndices():Vector<Int> {
-		return indicesArray;
-	}
-
-	public function getUVs():Vector<Float> {
-		if (uvsArray.length == 0) {
-			var array:Vector<Float> = new Vector();
-			for (index => value in uvs) {
-				array.push(value.u);
-				array.push(value.v);
-			}
-			return array;
-		} else {
-			return uvsArray;
-		}
+	public function getGeometry(name:String):GeometryData {
+		return geometrys.get(name);
 	}
 }
