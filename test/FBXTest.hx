@@ -6,7 +6,7 @@ class FBXTest {
     
     static function main() {
         trace("开始解析FBX");
-        var fbx = new FBXParser(sys.io.File.getBytes("assets/model.fbx"));
+        var fbx = new FBXParser(sys.io.File.getBytes("assets/cude.fbx"));
     }
 
 }

@@ -1,5 +1,7 @@
 package zygame.loader;
 
+import openfl.Vector;
+import zygame.data.GeometryData;
 import zygame.loader.fbx.Parser;
 import haxe.io.Bytes;
 import zygame.data.Object3DBaseData;
@@ -54,6 +56,9 @@ class FBXParser extends Object3DBaseData {
 				// 解析模型
 				for (c in child.childs) {
 					parsingObject(c);
+					if (child.name == "Geometry") {
+						break;
+					}
 				}
 		}
 	}
@@ -64,9 +69,38 @@ class FBXParser extends Object3DBaseData {
 			for (index => value in child.childs.keyValueIterator()) {
 				trace(value.name);
 			}
-			trace(child.get("Vertices").props[0].getParameters()[0]);
-            trace(child.get("PolygonVertexIndex").props[0].getParameters()[0]);
-            
+			trace(child.get("Vertices").getFloats());
+			trace(child.get("PolygonVertexIndex").getInts());
+			var geomtry = new GeometryData();
+			// 获取顶点
+			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
+			// 获取索引
+			var array = child.get("PolygonVertexIndex").getInts();
+			var indices = [];
+			for (index => value in array) {
+				if (value < 0) {
+					indices.push(-value - 1);
+					// 开始写入顶点
+					switch (indices.length) {
+						case 4:
+							// 4边形
+							geomtry.indicesArray.push(indices[0]);
+							geomtry.indicesArray.push(indices[1]);
+							geomtry.indicesArray.push(indices[2]);
+							geomtry.indicesArray.push(indices[0]);
+							geomtry.indicesArray.push(indices[2]);
+							geomtry.indicesArray.push(indices[3]);
+						case 3:
+							// 3边形
+							geomtry.indicesArray.push(indices[0]);
+							geomtry.indicesArray.push(indices[1]);
+							geomtry.indicesArray.push(indices[2]);
+					}
+					indices = [];
+				} else
+					indices.push(value);
+			}
+			this.setGeometry("main", geomtry);
 		}
 	}
 }

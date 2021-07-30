@@ -91,18 +91,25 @@ class DisplayObject3D extends DisplayObjectContainer {
 			buffers.push(vertices[i * 3 + 1]);
 			buffers.push(vertices[i * 3 + 2]);
 			// 颜色
-			var r = Math.random();
-			var g = Math.random();
-			var b = Math.random();
+			var r = 1;
+			var g = 0;
+			var b = 0;
 			buffers.push(r);
 			buffers.push(g);
 			buffers.push(b);
 			buffers.push(1);
 			// 纹理
-			buffers.push(uvs[i * 2]);
-			buffers.push(uvs[i * 2 + 1]);
+			if (uvs == null) {
+				buffers.push(0);
+				buffers.push(1);
+			} else {
+				buffers.push(uvs[i * 2]);
+				buffers.push(uvs[i * 2 + 1]);
+			}
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
+		trace("buffers=",buffers);
+		trace("indices=",indices);
 	}
 
 	override function onFrame() {
