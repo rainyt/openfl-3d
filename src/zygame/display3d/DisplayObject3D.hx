@@ -1,5 +1,9 @@
 package zygame.display3d;
 
+import openfl.geom.Matrix;
+#if zygame
+import zygame.core.Start;
+#end
 import openfl.display3D.IndexBuffer3D;
 import openfl.Lib;
 import openfl.display3D.Context3DBufferUsage;
@@ -27,7 +31,23 @@ import openfl.Vector;
 /**
  * 3D显示对象
  */
+@:access(openfl.display.DisplayObject)
 class DisplayObject3D extends DisplayObjectContainer {
+	/**
+	 * 世界模型
+	 */
+	private var __worldTransform3D:Matrix4;
+
+	/**
+	 * 当前模型的坐标
+	 */
+	private var __transform3D:Matrix4 = new Matrix4();
+
+	/**
+	 * 3D对象是否为最外层，不含2D容器
+	 */
+	private var __isRoot:Bool = true;
+
 	/**
 	 * 纹理
 	 * 
@@ -74,11 +94,13 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	public var rotationZ:Float = 0;
 
-	public function new(vertices:Vector<Float>, indices:Vector<Int>, uvs:Vector<Float> = null) {
+	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
 		super();
 		this.vertices = vertices;
 		this.indices = indices;
 		this.uvs = uvs;
+		if (vertices == null || indices == null)
+			return;
 		var context = Lib.application.window.stage.context3D;
 		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 9);
 		indexBuffer = context.createIndexBuffer(this.indices.length);
@@ -121,11 +143,13 @@ class DisplayObject3D extends DisplayObjectContainer {
 	#if zygame
 	override function onFrame() {
 		super.onFrame();
-		this.invalidate();
+		// this.invalidate();
 	}
 	#end
 
 	public function onRender(e:RenderEvent):Void {
+		if (vertices.length == 0 || indices.length == 0)
+			return;
 		var opengl:OpenGLRenderer = cast e.renderer;
 		var gl = opengl.gl;
 		var context = Lib.application.window.stage.context3D;
@@ -216,20 +240,15 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var modelViewMatrixIndex = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
 		var projectionMatrixIndex = gl.getUniformLocation(shaderProgram, "projectionMatrix");
 
-		var m = new Matrix4();
-		// m.appendScale(100, 100, 100);
-		m.appendScale(this.scaleX, this.scaleY, this.scaleZ);
-		m.appendRotation(rotationX, new Vector4(1, 0, 0, 0));
-		m.appendRotation(rotationY, new Vector4(0, 1, 0, 0));
-		m.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
-
 		var p = new Matrix4();
 		#if zygame
 		@:privateAccess p.createOrtho(0, getStageWidth(), getStageHeight(), 0, -1000, 1000);
 		#else
 		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
 		#end
-		@:privateAccess m.appendTranslation(this.__worldTransform.tx, this.__worldTransform.ty, 0);
+		// @:privateAccess m.appendTranslation(this.x, this.y, 0);
+		var m = __worldTransform3D.clone();
+		// @:privateAccess m.appendTranslation(__worldTransform.tx / Start.currentScale, __worldTransform.ty / Start.currentScale, 0);
 
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
@@ -259,5 +278,38 @@ class DisplayObject3D extends DisplayObjectContainer {
 		this.scaleY = f;
 		return this;
 		#end
+	}
+
+	override function onAddToStage() {
+		super.onAddToStage();
+		__isRoot = !Std.isOfType(this.parent, DisplayObject3D);
+	}
+
+	/**
+	 * 更新Transform
+	 * @param overrideTransform 
+	 */
+	override private function __updateTransforms(overrideTransform:Matrix = null):Void {
+		super.__updateTransforms(overrideTransform);
+		__updateTransforms3D();
+	}
+
+	/**
+	 * 更新3D的transforms
+	 */
+	private function __updateTransforms3D():Void {
+		__transform3D = new Matrix4();
+		__transform3D.appendScale(this.scaleX, this.scaleY, this.scaleZ);
+		__transform3D.appendRotation(rotationX, new Vector4(1, 0, 0, 0));
+		__transform3D.appendRotation(rotationY, new Vector4(0, 1, 0, 0));
+		__transform3D.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
+		__transform3D.appendTranslation(this.x, this.y, 0);
+
+		if (__isRoot) {
+			__worldTransform3D = __transform3D.clone();
+		} else {
+			__worldTransform3D = cast(this.parent, DisplayObject3D).__worldTransform3D.clone();
+			__worldTransform3D.prepend(__transform3D);
+		}
 	}
 }

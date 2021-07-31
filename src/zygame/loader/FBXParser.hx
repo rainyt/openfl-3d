@@ -1,8 +1,9 @@
 package zygame.loader;
 
-import haxe.Json;
-import zygame.data.SkeletonJoint;
-import zygame.data.Skeleton;
+import zygame.display3d.DisplayObject3D;
+import zygame.data.Vertex;
+import zygame.data.anim.SkeletonJoint;
+import zygame.data.anim.Skeleton;
 import openfl.Vector;
 import zygame.data.GeometryData;
 import zygame.loader.fbx.Parser;
@@ -19,6 +20,8 @@ class FBXParser extends Object3DBaseData {
 	 * FBX的原始数据
 	 */
 	public var root:FbxNode;
+
+	var defaultModelMatrixes:Map<Int, DefaultMatrixes> = [];
 
 	/**
 	 * 版本号
@@ -55,15 +58,19 @@ class FBXParser extends Object3DBaseData {
 			this.initFbxNode(child);
 		}
 
-		trace(invConnect);
+		// trace(invConnect);
 		for (child in root.childs) {
 			init(child);
 		}
-		
+
 		// fileName = root.getAll("Takes.Take.FileName")[0].props[0].toString();
 		// trace(root.getAll("Takes.Take"));
 		// trace(root.getAll("Takes.Take.LocalTime"));
 		// trace(root.getAll("Takes.Take.ReferenceTime"));
+	}
+
+	private function getAllModels() {
+		return this.root.getAll("Objects.Model");
 	}
 
 	private function init(child:FbxNode) {
@@ -72,38 +79,32 @@ class FBXParser extends Object3DBaseData {
 		switch (type) {
 			case "Objects":
 				// 解析模型
-				for (c in child.childs) {
-					trace(c.name, c.getName());
-				}
+				// for (c in child.childs) {
+				// trace(c.name, c.getName());
+				// }
 				var geometrys = child.getAll("Geometry");
 				for (g in geometrys) {
 					parsingGeometry(g);
 				}
-
-				parsingModel(child.getAll("Model"));
-
-				// var animationCurveNodes = child.getAll("AnimationCurveNode");
-				// trace("animationCurveNodes.length=", animationCurveNodes.length);
-				// for (a in animationCurveNodes) {
-				// 	parsingAnimate(a);
-				// }
+				buildHierarchy(getAllModels());
 		}
 	}
 
-	private function parsingModel(array:Array<FbxNode>):Void {
+	private function buildHierarchy(array:Array<FbxNode>):Void {
 		if (array.length == 0) {
 			return;
 		}
-		trace("创建骨骼");
 		var rootJoint = new FBXJoint();
 		var objects:Array<FBXJoint> = [];
 		var hobjects = new Map<Int, FBXJoint>();
 		var skeleton = new Skeleton();
 		for (index => model in array) {
 			var mtype = model.getType();
-			if (mtype != "LimbNode")
-				continue;
+			var isJoint = mtype == "LimbNode" && !isNullJoint(model);
 			var o = new FBXJoint();
+			o.isJoint = isJoint;
+			o.isMesh = mtype == "Mesh";
+			// 节点
 			var joint = new SkeletonJoint();
 			joint.name = model.getName();
 			skeleton.joints.push(joint);
@@ -112,10 +113,6 @@ class FBXParser extends Object3DBaseData {
 			objects.push(o);
 			hobjects.set(model.getId(), o);
 		}
-
-		trace("\n\n");
-		trace(Json.stringify(skeleton));
-		trace("\n\n");
 
 		for (o in objects) {
 			var p = getParent(o.model, "Model", true);
@@ -126,55 +123,63 @@ class FBXParser extends Object3DBaseData {
 			op.childs.push(o);
 			o.joint.parentIndex = op.model != null ? op.model.getId() : -1;
 			o.parent = op;
-			trace(o.model.getName());
 		}
 
-		trace("rootJoint.length", rootJoint.childs.length);
-		trace("objects.length", Json.stringify(skeleton.joints));
+		#if display
+		display3d = new DisplayObject3D();
+		#end
+		for (o in objects) {
+			if (!o.isMesh)
+				continue;
+			trace(o.model.getName());
+			// var m = getDefaultMatrixes(o.model);
+			// trace(Json.stringify(m));
 
-		// var isJoint = mtype == "LimbNode" && (!unskinnedJointsAsObjects || !isNullJoint(model));
-		// var o = new TmpObject();
-		// o.model = model;
-		// o.isJoint = isJoint;
-		// o.isMesh = mtype == "Mesh";
-		// hobjects.set(model.getId(), o);
-		// objects.push(o);
+			// 变形器绑定
+			// var childs = connect.get(o.model.getId());
+			// for (i in childs) {
+			// trace(ids.get(i));
+			// }
+			// trace(childs, getChilds(o.model, "Geometry"));
+			// var geom = getChild(o.model, "Geometry", true);
+			// trace(Json.stringify(o.model),"\n\n");
+			// if (geom != null) {
+			// 	var deformer = getChild(geom, "Deformer", true);
+			// 	if (deformer != null) {
+			// 		// trace("",geom);
+			// 		trace("变形器", deformer);
+			// 	}
+			// } else {
+			// 	trace("骨骼没有绑定", o.model.getId());
+			// }
+		}
 	}
 
-	// private function getDefaultMatrixes(model:FbxNode) {
-	// 	var id = model.getId();
-	// 	var d = defaultModelMatrixes.get(id);
-	// 	if (d != null)
-	// 		return d;
-	// 	d = new DefaultMatrixes();
-	// 	var F = Math.PI / 180;
-	// 	for (p in model.getAll("Properties70.P"))
-	// 		switch (p.props[0].toString()) {
-	// 			case "GeometricTranslation":
-	// 			// handle in Geometry directly
-	// 			case "PreRotation":
-	// 				d.preRot = new Point(round(p.props[4].toFloat() * F), round(p.props[5].toFloat() * F), round(p.props[6].toFloat() * F));
-	// 				if (d.preRot.x == 0 && d.preRot.y == 0 && d.preRot.z == 0)
-	// 					d.preRot = null;
-	// 			case "Lcl Rotation":
-	// 				d.rotate = new Point(round(p.props[4].toFloat() * F), round(p.props[5].toFloat() * F), round(p.props[6].toFloat() * F));
-	// 				if (d.rotate.x == 0 && d.rotate.y == 0 && d.rotate.z == 0)
-	// 					d.rotate = null;
-	// 			case "Lcl Translation":
-	// 				d.trans = new Point(round(p.props[4].toFloat()), round(p.props[5].toFloat()), round(p.props[6].toFloat()));
-	// 				if (d.trans.x == 0 && d.trans.y == 0 && d.trans.z == 0)
-	// 					d.trans = null;
-	// 			case "Lcl Scaling":
-	// 				d.scale = new Point(round(p.props[4].toFloat()), round(p.props[5].toFloat()), round(p.props[6].toFloat()));
-	// 				if (d.scale.x == 1 && d.scale.y == 1 && d.scale.z == 1)
-	// 					d.scale = null;
-	// 			default:
-	// 		}
-	// 	if (model.getType() == "LimbNode")
-	// 		updateDefaultMatrix(model, d);
-	// 	defaultModelMatrixes.set(id, d);
-	// 	return d;
-	// }
+	function isNullJoint(model:FbxNode) {
+		if (getParents(model, "Deformer").length > 0)
+			return false;
+		var parent = getParent(model, "Model", true);
+		if (parent == null)
+			return true;
+		var t = parent.getType();
+		if (t == "LimbNode" || t == "Root")
+			return false;
+		return true;
+	}
+
+	function addLink(parent:FbxNode, child:FbxNode) {
+		var pid = parent.getId();
+		var nid = child.getId();
+		connect.get(pid).push(nid);
+		invConnect.get(nid).push(pid);
+	}
+
+	function removeLink(parent:FbxNode, child:FbxNode) {
+		var pid = parent.getId();
+		var nid = child.getId();
+		connect.get(pid).remove(nid);
+		invConnect.get(nid).remove(pid);
+	}
 
 	/**
 	 * 初始化FbxNode的ID索引
@@ -226,8 +231,10 @@ class FBXParser extends Object3DBaseData {
 					c.push(parent);
 				}
 			case "Objects":
-				for (c in n.childs)
+				for (c in n.childs) {
 					ids.set(c.getId(), c);
+					// trace("ids",c.getId(),c.name);
+				}
 			default:
 		}
 	}
@@ -240,6 +247,21 @@ class FBXParser extends Object3DBaseData {
 
 	private function parsingGeometry(child:FbxNode) {
 		if (child.name == "Geometry") {
+			// trace(child.getId());
+			// 子变形器
+			// var def = getChild(child, "Deformer", true);
+			// if (def != null) {
+			// 	var subdef = getChilds(def, "Deformer");
+			// 	for (d in subdef) {
+			// 		// UserData
+			// 		// Indexes
+			// 		// Weights
+			// 		// Transform
+			// 		// TransformLink
+			// 		trace(d.get("Indexes").getInts());
+			// 	}
+			// }
+
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
@@ -310,6 +332,40 @@ class FBXParser extends Object3DBaseData {
 		}
 	}
 
+	public function getChild(node:FbxNode, nodeName:String, ?opt:Bool) {
+		var c = getChilds(node, nodeName);
+		if (c.length > 1)
+			throw node.getName() + " has " + c.length + " " + nodeName + " childs " + [for (o in c) o.getName()].join(",");
+		if (c.length == 0 && !opt)
+			throw "Missing " + node.getName() + " " + nodeName + " child";
+		return c[0];
+	}
+
+	public function getSpecChild(node:FbxNode, name:String) {
+		var nc = namedConnect.get(node.getId());
+		if (nc == null)
+			return null;
+		var id = nc.get(name);
+		if (id == null)
+			return null;
+		return ids.get(id);
+	}
+
+	public function getChilds(node:FbxNode, ?nodeName:String) {
+		var c = connect.get(node.getId());
+		var subs = [];
+		if (c != null)
+			for (id in c) {
+				var n = ids.get(id);
+				if (n == null)
+					throw id + " not found";
+				if (nodeName != null && n.name != nodeName)
+					continue;
+				subs.push(n);
+			}
+		return subs;
+	}
+
 	public function getParent(node:FbxNode, nodeName:String, ?opt:Bool) {
 		var p = getParents(node, nodeName);
 		if (p.length > 1)
@@ -334,7 +390,45 @@ class FBXParser extends Object3DBaseData {
 		return pl;
 	}
 
-	
+	private function getDefaultMatrixes(model:FbxNode) {
+		var id = model.getId();
+		var d = defaultModelMatrixes.get(id);
+		if (d != null)
+			return d;
+		d = new DefaultMatrixes();
+		var F = Math.PI / 180;
+		for (p in model.getAll("Properties70.P"))
+			switch (p.props[0].toString()) {
+				case "GeometricTranslation":
+				// handle in Geometry directly
+				case "PreRotation":
+					d.preRot = new Vertex(round(p.props[4].toFloat() * F), round(p.props[5].toFloat() * F), round(p.props[6].toFloat() * F));
+					if (d.preRot.x == 0 && d.preRot.y == 0 && d.preRot.z == 0)
+						d.preRot = null;
+				case "Lcl Rotation":
+					d.rotate = new Vertex(round(p.props[4].toFloat() * F), round(p.props[5].toFloat() * F), round(p.props[6].toFloat() * F));
+					if (d.rotate.x == 0 && d.rotate.y == 0 && d.rotate.z == 0)
+						d.rotate = null;
+				case "Lcl Translation":
+					d.trans = new Vertex(round(p.props[4].toFloat()), round(p.props[5].toFloat()), round(p.props[6].toFloat()));
+					if (d.trans.x == 0 && d.trans.y == 0 && d.trans.z == 0)
+						d.trans = null;
+				case "Lcl Scaling":
+					d.scale = new Vertex(round(p.props[4].toFloat()), round(p.props[5].toFloat()), round(p.props[6].toFloat()));
+					if (d.scale.x == 1 && d.scale.y == 1 && d.scale.z == 1)
+						d.scale = null;
+				default:
+			}
+
+		defaultModelMatrixes.set(id, d);
+		return d;
+	}
+
+	private function round(v:Float) {
+		if (v != v)
+			throw "NaN found";
+		return std.Math.fround(v * 131072) / 131072;
+	}
 }
 
 class FBXJoint {
@@ -345,6 +439,20 @@ class FBXJoint {
 	public var parent:FBXJoint;
 
 	public var childs:Array<FBXJoint> = [];
+
+	public var isJoint:Bool = false;
+
+	public var isMesh:Bool = false;
+
+	public function new() {}
+}
+
+class DefaultMatrixes {
+	public var trans:Null<Vertex>;
+	public var scale:Null<Vertex>;
+	public var rotate:Null<Vertex>;
+	public var preRot:Null<Vertex>;
+	public var wasRemoved:Null<Int>;
 
 	public function new() {}
 }

@@ -54,6 +54,19 @@ class GeometryData {
 		return indicesArray;
 	}
 
+	/**
+	 * 获取最大的顶点ID
+	 * @return Int
+	 */
+	public function getMaxIndicesId():Int {
+		var id = 0;
+		for (i in indicesArray) {
+			if (id < i)
+				id = i;
+		}
+		return id;
+	}
+
 	public function getUVs():Vector<Float> {
 		if (uvsArray.length == 0) {
 			var array:Vector<Float> = new Vector();
@@ -68,4 +81,16 @@ class GeometryData {
 	}
 
 	public function new() {}
+
+	public function copy():GeometryData {
+		var geometry = new GeometryData();
+		geometry.uvs = uvs.copy();
+		geometry.indicesArray = indicesArray.copy();
+		geometry.uvsArray = uvsArray.copy();
+		geometry.vertexNormals = vertexNormals.copy();
+		geometry.vertexNormalsArray = vertexNormalsArray.copy();
+		geometry.vertices = vertices.copy();
+		geometry.verticesArray = verticesArray.copy();
+		return geometry;
+	}
 }

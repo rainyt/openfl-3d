@@ -1,4 +1,4 @@
-package zygame.data;
+package zygame.data.anim;
 
 import openfl.Vector;
 

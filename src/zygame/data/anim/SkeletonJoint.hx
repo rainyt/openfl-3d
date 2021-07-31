@@ -1,4 +1,4 @@
-package zygame.data;
+package zygame.data.anim;
 
 import lime.math.Matrix4;
 
@@ -16,7 +16,7 @@ class SkeletonJoint {
 	/**
 	 * 反向绑定姿势矩阵作为原始数据，用于变换顶点以绑定关节空间，以准备使用关节矩阵进行变换。
 	 */
-	public var inverseBindPose:Matrix4;
+	public var inverseBindPose:Matrix4; 
 
 	public function new() {}
 }

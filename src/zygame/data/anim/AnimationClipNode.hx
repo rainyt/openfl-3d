@@ -1,4 +1,4 @@
-package zygame.data;
+package zygame.data.anim;
 
 /**
  * 动画数据
