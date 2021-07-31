@@ -1,8 +1,14 @@
 package zygame.data;
 
+import zygame.data.anim.Deformer;
 import openfl.Vector;
 
 class GeometryData {
+	/**
+	 * 皮肤变形器
+	 */
+	public var deformer:Deformer;
+
 	/**
 	 * 顶点数组数据
 	 */

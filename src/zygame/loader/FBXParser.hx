@@ -12,6 +12,8 @@ import openfl.Vector;
 import zygame.data.GeometryData;
 import zygame.loader.fbx.Parser;
 import haxe.io.Bytes;
+import zygame.data.anim.Deformer;
+import zygame.data.anim.Skin;
 import zygame.data.Object3DBaseData;
 
 using zygame.loader.fbx.Data;
@@ -112,6 +114,7 @@ class FBXParser extends Object3DBaseData {
 				// 节点
 				var joint = new SkeletonJoint();
 				joint.name = model.getName();
+				joint.id = "j" + model.getId();
 				skeleton.joints.push(joint);
 				o.joint = joint;
 			}
@@ -145,32 +148,30 @@ class FBXParser extends Object3DBaseData {
 			if (!o.isMesh)
 				continue;
 			var g = getChild(o.model, "Geometry");
+			var gdata = this.getGeometry("g" + g.getId());
 			#if !undisplay
-			var gameGeomtry = this.getGeometry("g" + g.getId());
-			var mesh = new MeshDisplayObject(gameGeomtry);
+			var mesh = new MeshDisplayObject(gdata);
 			display3d.addChild(mesh);
 			mesh.transform3D = getDefaultMatrixes(o.model).toMatrix4();
 			#end
-			// var m = getDefaultMatrixes(o.model);
-			// trace(Json.stringify(m));
-
 			// 变形器绑定
-			// var childs = connect.get(o.model.getId());
-			// for (i in childs) {
-			// trace(ids.get(i));
-			// }
-			// trace(childs, getChilds(o.model, "Geometry"));
-			// var geom = getChild(o.model, "Geometry", true);
-			// trace(Json.stringify(o.model),"\n\n");
-			// if (geom != null) {
-			// 	var deformer = getChild(geom, "Deformer", true);
-			// 	if (deformer != null) {
-			// 		// trace("",geom);
-			// 		trace("变形器", deformer);
-			// 	}
-			// } else {
-			// 	trace("骨骼没有绑定", o.model.getId());
-			// }
+			var def = this.getChild(g, "Deformer", true);
+			if (def != null) {
+				// 该模型有变形器绑定
+				var exportDeformer = new Deformer();
+				var defs = this.getChilds(def, "Deformer");
+				for (def2 in defs) {
+					var skin:Skin = new Skin();
+					skin.id = "s" + def2.getId();
+					skin.bindJointId = "j" + connect.get(def2.getId())[0];
+					skin.indexes = new Vector(def2.get("Indexes").getInts());
+					skin.weights = new Vector(def2.get("Weights").getFloats());
+					exportDeformer.skins.push(skin);
+				}
+				// 让网格绑定变形器
+				gdata.deformer = exportDeformer;
+				trace(Json.stringify(exportDeformer));
+			}
 		}
 	}
 
