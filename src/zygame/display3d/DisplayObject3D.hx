@@ -50,7 +50,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	/**
 	 * 纹理
-	 * 
 	 */
 	public var texture:BitmapData;
 
@@ -86,13 +85,73 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	private var c = [];
 
-	public var scaleZ:Float = 1;
+	/**
+	 * 缩放比例Z
+	 */
+	public var scaleZ(get, set):Float;
 
-	public var rotationX:Float = 0;
+	private var _scaleZ:Float = 0;
 
-	public var rotationY:Float = 0;
+	private function set_scaleZ(f:Float):Float {
+		_scaleZ = f;
+		this.invalidate();
+		return f;
+	}
 
-	public var rotationZ:Float = 0;
+	private function get_scaleZ():Float {
+		return _scaleZ;
+	}
+
+	/**
+	 * 角度X
+	 */
+	public var rotationX(get, set):Float;
+
+	private var _rotationX:Float = 0;
+
+	private function set_rotationX(f:Float):Float {
+		_rotationX = f;
+		this.invalidate();
+		return f;
+	}
+
+	private function get_rotationX():Float {
+		return _rotationX;
+	}
+
+	/**
+	 * 角度Y
+	 */
+	public var rotationY(get, set):Float;
+
+	private var _rotationY:Float = 0;
+
+	private function set_rotationY(f:Float):Float {
+		_rotationY = f;
+		this.invalidate();
+		return f;
+	}
+
+	private function get_rotationY():Float {
+		return _rotationY;
+	}
+
+	/**
+	 * 角度Z
+	 */
+	public var rotationZ(get, set):Float;
+
+	private var _rotationZ:Float = 0;
+
+	private function set_rotationZ(f:Float):Float {
+		_rotationZ = f;
+		this.invalidate();
+		return f;
+	}
+
+	private function get_rotationZ():Float {
+		return _rotationZ;
+	}
 
 	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
 		super();
