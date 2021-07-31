@@ -108,13 +108,15 @@ class FBXParser extends Object3DBaseData {
 			var o = new FBXJoint();
 			o.isJoint = isJoint;
 			o.isMesh = mtype == "Mesh";
-			// 节点
-			var joint = new SkeletonJoint();
-			joint.name = model.getName();
-			skeleton.joints.push(joint);
+			if (isJoint) {
+				// 节点
+				var joint = new SkeletonJoint();
+				joint.name = model.getName();
+				skeleton.joints.push(joint);
+				o.joint = joint;
+			}
 			o.model = model;
 			o.defaultMatrixes = getDefaultMatrixes(model);
-			o.joint = joint;
 			objects.push(o);
 			// 绑定节点的骨骼矩阵
 			o.inverseBindPose();
@@ -129,7 +131,8 @@ class FBXParser extends Object3DBaseData {
 			if (op == null)
 				op = rootJoint; // if parent has been removed
 			op.childs.push(o);
-			o.joint.parentIndex = op.model != null ? op.model.getId() : -1;
+			if (o.joint != null)
+				o.joint.parentIndex = op.model != null ? op.model.getId() : -1;
 			o.parent = op;
 		}
 
@@ -144,9 +147,9 @@ class FBXParser extends Object3DBaseData {
 			var g = getChild(o.model, "Geometry");
 			#if !undisplay
 			var gameGeomtry = this.getGeometry("g" + g.getId());
-			trace("gameGeomtry", gameGeomtry != null);
 			var mesh = new MeshDisplayObject(gameGeomtry);
 			display3d.addChild(mesh);
+			mesh.transform3D = getDefaultMatrixes(o.model).toMatrix4();
 			#end
 			// var m = getDefaultMatrixes(o.model);
 			// trace(Json.stringify(m));
@@ -263,21 +266,6 @@ class FBXParser extends Object3DBaseData {
 
 	private function parsingGeometry(child:FbxNode) {
 		if (child.name == "Geometry") {
-			// trace(child.getId());
-			// 子变形器
-			// var def = getChild(child, "Deformer", true);
-			// if (def != null) {
-			// 	var subdef = getChilds(def, "Deformer");
-			// 	for (d in subdef) {
-			// 		// UserData
-			// 		// Indexes
-			// 		// Weights
-			// 		// Transform
-			// 		// TransformLink
-			// 		trace(d.get("Indexes").getInts());
-			// 	}
-			// }
-
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
@@ -406,7 +394,7 @@ class FBXParser extends Object3DBaseData {
 		return pl;
 	}
 
-	private function getDefaultMatrixes(model:FbxNode) {
+	private function getDefaultMatrixes(model:FbxNode):DefaultMatrixes {
 		var id = model.getId();
 		var d = defaultModelMatrixes.get(id);
 		if (d != null)
@@ -467,7 +455,7 @@ class FBXJoint {
 	public function inverseBindPose():Void {
 		// trace(model.get("Properties70"));
 		trace("\n", Json.stringify(defaultMatrixes));
-		if (defaultMatrixes != null) {
+		if (defaultMatrixes != null && joint != null) {
 			joint.inverseBindPose = defaultMatrixes.toMatrix4();
 		}
 	}
@@ -487,9 +475,10 @@ class DefaultMatrixes {
 		if (scale != null)
 			matrix.appendScale(this.scale.x, this.scale.y, this.scale.z);
 		if (rotate != null) {
-			matrix.appendRotation(rotate.x, new Vector4(1, 0, 0, 0));
-			matrix.appendRotation(rotate.y, new Vector4(0, 1, 0, 0));
-			matrix.appendRotation(rotate.z, new Vector4(0, 0, 1, 0));
+			matrix.appendRotation(rotate.x * 180 / Math.PI, new Vector4(1, 0, 0, 0));
+			matrix.appendRotation(rotate.y * 180 / Math.PI, new Vector4(0, 1, 0, 0));
+			matrix.appendRotation(rotate.z * 180 / Math.PI, new Vector4(0, 0, 1, 0));
+			trace("\n\n", rotate.x * 180 / Math.PI, rotate.y * 180 / Math.PI, rotate.z * 180 / Math.PI);
 		}
 		if (trans != null)
 			matrix.appendTranslation(this.trans.x, this.trans.y, this.trans.z);
