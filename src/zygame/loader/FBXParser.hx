@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import zygame.display3d.MeshDisplayObject;
 import zygame.display3d.DisplayObject3D;
 import zygame.data.Vertex;
 import zygame.data.anim.SkeletonJoint;
@@ -125,13 +126,19 @@ class FBXParser extends Object3DBaseData {
 			o.parent = op;
 		}
 
-		#if display
+		#if !undisplay
 		display3d = new DisplayObject3D();
 		#end
 		for (o in objects) {
 			if (!o.isMesh)
 				continue;
-			trace(o.model.getName());
+			var g = getChild(o.model, "Geometry");
+			#if !undisplay
+			var gameGeomtry = this.getGeometry("g" + g.getId());
+			trace("gameGeomtry", gameGeomtry != null);
+			var mesh = new MeshDisplayObject(gameGeomtry);
+			display3d.addChild(mesh);
+			#end
 			// var m = getDefaultMatrixes(o.model);
 			// trace(Json.stringify(m));
 

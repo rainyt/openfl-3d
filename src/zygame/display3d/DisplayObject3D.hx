@@ -89,7 +89,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 */
 	public var scaleZ(get, set):Float;
 
-	private var _scaleZ:Float = 0;
+	private var _scaleZ:Float = 1;
 
 	private function set_scaleZ(f:Float):Float {
 		_scaleZ = f;
@@ -197,8 +197,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 			}
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
-		trace("buffers=", buffers);
-		trace("indices=", indices);
+		// trace("buffers=", buffers);
+		// trace("indices=", indices);
 	}
 
 	#if zygame
