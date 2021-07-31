@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import zygame.data.anim.Skeleton;
 import openfl.events.Event;
 import openfl.geom.Matrix;
 #if zygame
@@ -48,6 +49,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 	private var __isRoot:Bool = true;
 
 	/**
+	 * 当前坐标的补充
+	 */
+	public var transform3D:Matrix4;
+
+	/**
 	 * 纹理
 	 */
 	public var texture:BitmapData;
@@ -83,6 +89,23 @@ class DisplayObject3D extends DisplayObjectContainer {
 	private var shaderProgram:GLProgram;
 
 	private var c = [];
+
+	/**
+	 * 缩放比例Z
+	 */
+	public var z(get, set):Float;
+
+	private var _z:Float = 0;
+
+	private function set_z(f:Float):Float {
+		_z = f;
+		this.invalidate();
+		return f;
+	}
+
+	private function get_z():Float {
+		return _z;
+	}
 
 	/**
 	 * 缩放比例Z
@@ -151,6 +174,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 	private function get_rotationZ():Float {
 		return _rotationZ;
 	}
+
+	/**
+	 * 绑定骨骼动画
+	 */
+	public var skeleton:Skeleton;
 
 	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
 		super();
@@ -307,10 +335,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 		#else
 		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
 		#end
-		// @:privateAccess m.appendTranslation(this.x, this.y, 0);
-		var m = __worldTransform3D.clone();
-		// @:privateAccess m.appendTranslation(__worldTransform.tx / Start.currentScale, __worldTransform.ty / Start.currentScale, 0);
 
+		var m = __worldTransform3D.clone();
+		if (transform3D != null) {
+			m.prepend(transform3D);
+		}
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
 
@@ -370,7 +399,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		__transform3D.appendRotation(rotationX, new Vector4(1, 0, 0, 0));
 		__transform3D.appendRotation(rotationY, new Vector4(0, 1, 0, 0));
 		__transform3D.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
-		__transform3D.appendTranslation(this.x, this.y, 0);
+		__transform3D.appendTranslation(this.x, this.y, this.z);
 
 		if (__isRoot) {
 			__worldTransform3D = __transform3D.clone();

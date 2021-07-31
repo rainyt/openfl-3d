@@ -1,5 +1,8 @@
 package zygame.loader;
 
+import lime.math.Vector4;
+import lime.math.Matrix4;
+import haxe.Json;
 import zygame.display3d.MeshDisplayObject;
 import zygame.display3d.DisplayObject3D;
 import zygame.data.Vertex;
@@ -110,8 +113,12 @@ class FBXParser extends Object3DBaseData {
 			joint.name = model.getName();
 			skeleton.joints.push(joint);
 			o.model = model;
+			o.defaultMatrixes = getDefaultMatrixes(model);
 			o.joint = joint;
 			objects.push(o);
+			// 绑定节点的骨骼矩阵
+			o.inverseBindPose();
+
 			hobjects.set(model.getId(), o);
 		}
 
@@ -125,6 +132,8 @@ class FBXParser extends Object3DBaseData {
 			o.joint.parentIndex = op.model != null ? op.model.getId() : -1;
 			o.parent = op;
 		}
+
+		skeletons.set("main", skeleton);
 
 		#if !undisplay
 		display3d = new DisplayObject3D();
@@ -451,7 +460,17 @@ class FBXJoint {
 
 	public var isMesh:Bool = false;
 
+	public var defaultMatrixes:DefaultMatrixes;
+
 	public function new() {}
+
+	public function inverseBindPose():Void {
+		// trace(model.get("Properties70"));
+		trace("\n", Json.stringify(defaultMatrixes));
+		if (defaultMatrixes != null) {
+			joint.inverseBindPose = defaultMatrixes.toMatrix4();
+		}
+	}
 }
 
 class DefaultMatrixes {
@@ -462,4 +481,18 @@ class DefaultMatrixes {
 	public var wasRemoved:Null<Int>;
 
 	public function new() {}
+
+	public function toMatrix4():Matrix4 {
+		var matrix = new Matrix4();
+		if (scale != null)
+			matrix.appendScale(this.scale.x, this.scale.y, this.scale.z);
+		if (rotate != null) {
+			matrix.appendRotation(rotate.x, new Vector4(1, 0, 0, 0));
+			matrix.appendRotation(rotate.y, new Vector4(0, 1, 0, 0));
+			matrix.appendRotation(rotate.z, new Vector4(0, 0, 1, 0));
+		}
+		if (trans != null)
+			matrix.appendTranslation(this.trans.x, this.trans.y, this.trans.z);
+		return matrix;
+	}
 }
