@@ -1,8 +1,12 @@
 package zygame.display3d;
 
+import openfl.events.Event;
 import openfl.geom.Matrix;
 #if zygame
 import zygame.core.Start;
+import zygame.display.DisplayObjectContainer;
+#else
+import openfl.display.DisplayObjectContainer;
 #end
 import openfl.display3D.IndexBuffer3D;
 import openfl.Lib;
@@ -20,11 +24,6 @@ import lime.graphics.opengl.GLBuffer;
 import lime.utils.UInt16Array;
 import lime.utils.Float32Array;
 import openfl.display.OpenGLRenderer;
-#if zygame
-import zygame.display.DisplayObjectContainer;
-#else
-import openfl.display.DisplayObjectContainer;
-#end
 import openfl.events.RenderEvent;
 import openfl.Vector;
 
@@ -155,6 +154,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
 		super();
+		#if !zygame
+		this.addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
+		#end
 		this.vertices = vertices;
 		this.indices = indices;
 		this.uvs = uvs;
@@ -339,10 +341,16 @@ class DisplayObject3D extends DisplayObjectContainer {
 		#end
 	}
 
+	#if zygame
 	override function onAddToStage() {
 		super.onAddToStage();
 		__isRoot = !Std.isOfType(this.parent, DisplayObject3D);
 	}
+	#else
+	private function onAddToStage(_) {
+		__isRoot = !Std.isOfType(this.parent, DisplayObject3D);
+	}
+	#end
 
 	/**
 	 * 更新Transform
