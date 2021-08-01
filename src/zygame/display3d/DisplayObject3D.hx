@@ -51,7 +51,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 当前坐标的补充
 	 */
-	public var transform3D:Matrix4;
+	// public var transform3D:Matrix4;
 
 	/**
 	 * 纹理
@@ -337,9 +337,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 		#end
 
 		var m = __worldTransform3D.clone();
-		if (transform3D != null) {
-			m.prepend(transform3D);
-		}
+		// if (transform3D != null) {
+			// m.prepend(transform3D);
+		// }
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
 

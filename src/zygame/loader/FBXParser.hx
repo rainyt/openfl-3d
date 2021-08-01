@@ -135,7 +135,7 @@ class FBXParser extends Object3DBaseData {
 				op = rootJoint; // if parent has been removed
 			op.childs.push(o);
 			if (o.joint != null)
-				o.joint.parentIndex = op.model != null ? op.model.getId() : -1;
+				o.joint.parentId = op.model != null ? "j" + op.model.getId() : null;
 			o.parent = op;
 		}
 
@@ -152,7 +152,7 @@ class FBXParser extends Object3DBaseData {
 			#if !undisplay
 			var mesh = new MeshDisplayObject(gdata);
 			display3d.addChild(mesh);
-			mesh.transform3D = getDefaultMatrixes(o.model).toMatrix4();
+			getDefaultMatrixes(o.model).initMesh(mesh);
 			#end
 			// 变形器绑定
 			var def = this.getChild(g, "Deformer", true);
@@ -170,7 +170,7 @@ class FBXParser extends Object3DBaseData {
 				}
 				// 让网格绑定变形器
 				gdata.deformer = exportDeformer;
-				trace(Json.stringify(exportDeformer));
+				// trace(Json.stringify(exportDeformer));
 			}
 		}
 	}
@@ -457,7 +457,8 @@ class FBXJoint {
 		// trace(model.get("Properties70"));
 		trace("\n", Json.stringify(defaultMatrixes));
 		if (defaultMatrixes != null && joint != null) {
-			joint.inverseBindPose = defaultMatrixes.toMatrix4();
+			defaultMatrixes.init(joint);
+			// joint.inverseBindPose = defaultMatrixes.toMatrix4();
 		}
 	}
 }
@@ -471,18 +472,37 @@ class DefaultMatrixes {
 
 	public function new() {}
 
-	public function toMatrix4():Matrix4 {
-		var matrix = new Matrix4();
-		if (scale != null)
-			matrix.appendScale(this.scale.x, this.scale.y, this.scale.z);
-		if (rotate != null) {
-			matrix.appendRotation(rotate.x * 180 / Math.PI, new Vector4(1, 0, 0, 0));
-			matrix.appendRotation(rotate.y * 180 / Math.PI, new Vector4(0, 1, 0, 0));
-			matrix.appendRotation(rotate.z * 180 / Math.PI, new Vector4(0, 0, 1, 0));
-			trace("\n\n", rotate.x * 180 / Math.PI, rotate.y * 180 / Math.PI, rotate.z * 180 / Math.PI);
+	public function initMesh(mesh:DisplayObject3D):Void {
+		if (scale != null) {
+			mesh.scaleX = this.scale.x;
+			mesh.scaleX = this.scale.y;
+			mesh.scaleX = this.scale.z;
 		}
-		if (trans != null)
-			matrix.appendTranslation(this.trans.x, this.trans.y, this.trans.z);
-		return matrix;
+		if (rotate != null) {
+			mesh.rotationX = rotate.x * 180 / Math.PI;
+			mesh.rotationY = rotate.y * 180 / Math.PI;
+			mesh.rotationZ = rotate.z * 180 / Math.PI;
+		}
+		if (trans != null) {
+			mesh.x = trans.x;
+			mesh.y = trans.y;
+		}
+	}
+
+	public function init(joint:SkeletonJoint):Void {
+		if (scale != null) {
+			joint.scaleX = this.scale.x;
+			joint.scaleX = this.scale.y;
+			joint.scaleX = this.scale.z;
+		}
+		if (rotate != null) {
+			joint.rotationX = rotate.x * 180 / Math.PI;
+			joint.rotationY = rotate.y * 180 / Math.PI;
+			joint.rotationZ = rotate.z * 180 / Math.PI;
+		}
+		if (trans != null) {
+			joint.x = trans.x;
+			joint.y = trans.y;
+		}
 	}
 }
