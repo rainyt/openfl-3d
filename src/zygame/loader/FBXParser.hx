@@ -69,10 +69,271 @@ class FBXParser extends Object3DBaseData {
 			init(child);
 		}
 
+		// loadAnimate 加载动画
+		// this.loadAnimate();
+
 		// fileName = root.getAll("Takes.Take.FileName")[0].props[0].toString();
 		// trace(root.getAll("Takes.Take"));
 		// trace(root.getAll("Takes.Take.LocalTime"));
 		// trace(root.getAll("Takes.Take.ReferenceTime"));
+	}
+
+	public function loadAnimate():Void {
+		var animName = null;
+		var defNode = null;
+		var animNodes = [];
+		for (a in this.root.getAll("Objects.AnimationStack"))
+			if (animName == null || a.getName() == animName) {
+				for (n in getChilds(a, "AnimationLayer")) {
+					defNode = n;
+					if (getChilds(n, "AnimationCurveNode").length > 0)
+						animNodes.push(n);
+				}
+				
+			}
+		var animNode = switch (animNodes.length) {
+			case 0:
+				defNode;
+			case 1:
+				animNodes[0];
+			default:
+				trace("Multiple animation layers curves are currently not supported");
+				animNodes[0];
+		}
+
+		if (animNode == null) {
+			if (animName != null)
+				throw "Animation not found " + animName;
+			// if (uvAnims == null)
+			// return null;
+		}
+
+		if (animName == null)
+			animName = getParent(animNode, "AnimationStack").getName();
+
+		var curves = new Map();
+		var P0 = new Vertex(0, 0, 0);
+		var P1 = new Vertex(1, 1, 1);
+		var F = Math.PI / 180;
+		var allTimes = new Map();
+
+		if (animNode != null)
+			for (cn in getChilds(animNode, "AnimationCurveNode")) {
+				var model = getParent(cn, "Model", true);
+				if (model == null) {
+					switch (cn.getName()) {
+						case "Roll", "FieldOfView":
+							// the parent is not a Model but a NodeAttribute
+							var nattr = getParent(cn, "NodeAttribute", true);
+							model = nattr == null ? null : getParent(nattr, "Model", true);
+							if (model == null)
+								continue;
+						default:
+							continue; // morph support
+					}
+				}
+
+				var c = getObjectCurve(curves, model, cn.getName(), animName);
+				if (c == null)
+					continue;
+
+				var dataCurves = getChilds(cn, "AnimationCurve");
+				if (dataCurves.length == 0)
+					continue;
+
+				var cname = cn.getName();
+				// collect all the timestamps
+				var times = dataCurves[0].get("KeyTime").getFloats();
+				for (i in 0...times.length) {
+					var t = times[i];
+					// fix rounding error
+					if (t % 100 != 0) {
+						t += 100 - (t % 100);
+						times[i] = t;
+					}
+					// this should give significant-enough key
+					var it = Std.int(t / 200000);
+					allTimes.set(it, t);
+				}
+
+				// handle special curves
+				if (dataCurves.length != 3) {
+					var values = dataCurves[0].get("KeyValueFloat").getFloats();
+					switch (cname) {
+						case "Visibility":
+							if (!roundValues(values, 1))
+								continue;
+							c.a = {
+								v: values,
+								t: times,
+							};
+							continue;
+						case "Roll":
+							if (!roundValues(values, 0))
+								continue;
+							c.roll = {
+								v: values,
+								t: times,
+							};
+							continue;
+						case "FieldOfView":
+							var ratio = 16 / 9, fov = 45.;
+							for (p in getChild(model, "NodeAttribute").getAll("Properties70.P")) {
+								switch (p.props[0].toString()) {
+									case "FilmAspectRatio": ratio = p.props[4].toFloat();
+									case "FieldOfView": fov = p.props[4].toFloat();
+									default:
+								}
+							}
+							inline function fovXtoY(v:Float) {
+								return 2 * Math.atan(Math.tan(v * 0.5 * Math.PI / 180) / ratio) * 180 / Math.PI;
+							}
+							for (i in 0...values.length)
+								values[i] = fovXtoY(values[i]);
+							if (!roundValues(values, fovXtoY(fov)))
+								continue;
+							c.fov = {
+								v: values,
+								t: times,
+							};
+							continue;
+						default:
+					}
+				}
+				// handle TRS curves
+				var data = {
+					x: null,
+					y: null,
+					z: null,
+					t: times,
+				};
+
+				var curves = namedConnect.get(cn.getId());
+				for (cname in curves.keys()) {
+					var values = ids.get(curves.get(cname)).get("KeyValueFloat").getFloats();
+					switch (cname) {
+						case "d|X":
+							data.x = values;
+						case "d|Y":
+							data.y = values;
+						case "d|Z":
+							data.z = values;
+						default:
+							trace("Unsupported key name " + cname);
+					}
+				}
+
+				trace(cname,Json.stringify(c.def));
+
+				// this can happen when resampling anims due to rounding errors, let's ignore it for now
+				// if( data.y.length != times.length || data.z.length != times.length )
+				//	throw "Unsynchronized curve components on " + model.getName()+"."+cname+" (" + data.x.length + "/" + data.y.length + "/" + data.z.length + ")";
+				// optimize empty animations out
+				// var M = 1.0;
+				// var def = switch (cname) {
+				// 	case "T":
+				// 		trace("T?");
+				// 		if (c.def.trans == null) P0 else c.def.trans;
+				// 	case "R":
+				// 		trace("R?");
+				// 		M = F;
+				// 		if (c.def.rotate == null && c.def.preRot == null) P0 else if (c.def.rotate == null) c.def.preRot else if (c.def.preRot == null)
+				// 			c.def.rotate else {
+				// 			// var q = new h3d.Quat(), q2 = new h3d.Quat();
+				// 			// q2.initRotation(c.def.preRot.x, c.def.preRot.y, c.def.preRot.z);
+				// 			// q.initRotation(c.def.rotate.x, c.def.rotate.y, c.def.rotate.z);
+				// 			// q.multiply(q2, q);
+				// 			// q.toEuler().toPoint();
+				// 		}
+				// 	case "S":
+				// 		if (c.def.scale == null) P1 else c.def.scale;
+				// 	default:
+				// 		trace("Unknown curve " + model.getName() + "." + cname);
+				// 		continue;
+				// }
+				// var hasValue = false;
+				// if (data.x != null && roundValues(data.x, def.x, M))
+				// 	hasValue = true;
+				// if (data.y != null && roundValues(data.y, def.y, M))
+				// 	hasValue = true;
+				// if (data.z != null && roundValues(data.z, def.z, M))
+				// 	hasValue = true;
+				// // no meaningful value found
+				// if (!hasValue)
+				// 	continue;
+				// var keyCount = 0;
+				// if (data.x != null)
+				// 	keyCount = data.x.length;
+				// if (data.y != null)
+				// 	keyCount = data.y.length;
+				// if (data.z != null)
+				// 	keyCount = data.z.length;
+				// if (data.x == null)
+				// 	data.x = [for (i in 0...keyCount) def.x];
+				// if (data.y == null)
+				// 	data.y = [for (i in 0...keyCount) def.y];
+				// if (data.z == null)
+				// 	data.z = [for (i in 0...keyCount) def.z];
+				// switch (cname) {
+				// 	case "T":
+				// 		c.t = data;
+				// 	case "R":
+				// 		c.r = data;
+				// 	case "S":
+				// 		c.s = data;
+				// 	default:
+				// 		throw "assert";
+				// }
+				trace(curves);
+			}
+
+		trace("动画名：", animName, animNodes.length);
+		trace(allTimes);
+	}
+
+	function getObjectCurve(curves:Map<Int, AnimCurve>, model:FbxNode, curveName:String, animName:String):AnimCurve {
+		var c = curves.get(model.getId());
+		if (c != null)
+			return c;
+		var name = model.getName();
+		// if (skipObjects.get(name))
+		// 	return null;
+		var def = getDefaultMatrixes(model);
+		if (def == null)
+			return null;
+		// if it's a move animation on a terminal unskinned joint, let's skip it
+		var isMove = curveName != "Visibility" && curveName != "UV";
+		if (def.wasRemoved != null && (isMove || def.wasRemoved == -1))
+			return null;
+		// allow not move animations on root model
+		if (def.wasRemoved != null && def.wasRemoved != -2) {
+			// apply it on the skin instead
+			model = ids.get(def.wasRemoved);
+			name = model.getName();
+			c = curves.get(def.wasRemoved);
+			def = getDefaultMatrixes(model);
+			// todo : change behavior not to remove the mesh but the skin instead!
+			if (def == null)
+				throw "assert";
+		}
+		if (c == null) {
+			c = new AnimCurve(def, name);
+			curves.set(model.getId(), c);
+		}
+		return c;
+	}
+
+	function roundValues(data:Array<Float>, def:Float, mult:Float = 1.) {
+		var hasValue = false;
+		for (i in 0...data.length) {
+			var v = data[i] * mult;
+			if (Math.abs(v - def) > 1e-3)
+				hasValue = true;
+			else
+				v = def;
+			data[i] = round(v);
+		}
+		return hasValue;
 	}
 
 	private function getAllModels() {
@@ -80,7 +341,7 @@ class FBXParser extends Object3DBaseData {
 	}
 
 	private function init(child:FbxNode) {
-		trace("init", child.name);
+		// trace("init", child.name);
 		var type = child.name;
 		switch (type) {
 			case "Objects":
@@ -455,7 +716,7 @@ class FBXJoint {
 
 	public function inverseBindPose():Void {
 		// trace(model.get("Properties70"));
-		trace("\n", Json.stringify(defaultMatrixes));
+		// trace("\n", Json.stringify(defaultMatrixes));
 		if (defaultMatrixes != null && joint != null) {
 			defaultMatrixes.init(joint);
 			// joint.inverseBindPose = defaultMatrixes.toMatrix4();
@@ -504,5 +765,37 @@ class DefaultMatrixes {
 			joint.x = trans.x;
 			joint.y = trans.y;
 		}
+	}
+}
+
+private class AnimCurve {
+	public var def:DefaultMatrixes;
+	public var object:String;
+	public var t:{
+		t:Array<Float>,
+		x:Array<Float>,
+		y:Array<Float>,
+		z:Array<Float>
+	};
+	public var r:{
+		t:Array<Float>,
+		x:Array<Float>,
+		y:Array<Float>,
+		z:Array<Float>
+	};
+	public var s:{
+		t:Array<Float>,
+		x:Array<Float>,
+		y:Array<Float>,
+		z:Array<Float>
+	};
+	public var a:{t:Array<Float>, v:Array<Float>};
+	public var fov:{t:Array<Float>, v:Array<Float>};
+	public var roll:{t:Array<Float>, v:Array<Float>};
+	public var uv:Array<{t:Float, u:Float, v:Float}>;
+
+	public function new(def, object) {
+		this.def = def;
+		this.object = object;
 	}
 }

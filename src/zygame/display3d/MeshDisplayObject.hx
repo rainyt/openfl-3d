@@ -8,7 +8,8 @@ import zygame.data.GeometryData;
 class MeshDisplayObject extends DisplayObject3D {
 	public function new(geomtryData:GeometryData) {
 		super(geomtryData.getVertices(), geomtryData.getIndices(), geomtryData.getUVs());
-		if (geomtryData.getVertices().length == 0 || geomtryData.getIndices().length == 0)
+		this.__geometryData = geomtryData;
+		if (geomtryData == null || geomtryData.getVertices().length == 0 || geomtryData.getIndices().length == 0)
 			throw "无效的GeometryData数据";
 	}
 }

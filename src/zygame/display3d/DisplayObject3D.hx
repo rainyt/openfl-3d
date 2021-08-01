@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import zygame.data.GeometryData;
 import zygame.data.anim.Skeleton;
 import openfl.events.Event;
 import openfl.geom.Matrix;
@@ -33,6 +34,16 @@ import openfl.Vector;
  */
 @:access(openfl.display.DisplayObject)
 class DisplayObject3D extends DisplayObjectContainer {
+	/**
+	 * GeometryData
+	 */
+	private var __geometryData:GeometryData;
+
+	/**
+	 * GeometryData
+	 */
+	public var geometryData(get, never):GeometryData;
+
 	/**
 	 * 世界模型
 	 */
@@ -338,7 +349,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		var m = __worldTransform3D.clone();
 		// if (transform3D != null) {
-			// m.prepend(transform3D);
+		// m.prepend(transform3D);
 		// }
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
@@ -407,5 +418,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 			__worldTransform3D = cast(this.parent, DisplayObject3D).__worldTransform3D.clone();
 			__worldTransform3D.prepend(__transform3D);
 		}
+	}
+
+	function get_geometryData():GeometryData {
+		return __geometryData;
 	}
 }
