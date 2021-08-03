@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import zygame.data.anim.SkeletonPose;
 import lime.utils.Float32Array;
 import lime.math.Vector4;
 import lime.math.Matrix4;
@@ -73,7 +74,7 @@ class FBXParser extends Object3DBaseData {
 		}
 
 		// loadAnimate 加载动画
-		// this.loadAnimate();
+		this.loadAnimate();
 
 		// fileName = root.getAll("Takes.Take.FileName")[0].props[0].toString();
 		// trace(root.getAll("Takes.Take"));
@@ -155,7 +156,8 @@ class FBXParser extends Object3DBaseData {
 					}
 					// this should give significant-enough key
 					var it = Std.int(t / 200000);
-					allTimes.set(it, t);
+					// trace("it=",it / 200 / 1000,t);
+					allTimes.set(it, t / 200000 / 200 / 1000);
 				}
 
 				// handle special curves
@@ -225,72 +227,81 @@ class FBXParser extends Object3DBaseData {
 					}
 				}
 
-				trace(cname, Json.stringify(c.def));
+				// trace(cname, Json.stringify(c.def));
 
 				// this can happen when resampling anims due to rounding errors, let's ignore it for now
 				// if( data.y.length != times.length || data.z.length != times.length )
 				//	throw "Unsynchronized curve components on " + model.getName()+"."+cname+" (" + data.x.length + "/" + data.y.length + "/" + data.z.length + ")";
 				// optimize empty animations out
-				// var M = 1.0;
-				// var def = switch (cname) {
-				// 	case "T":
-				// 		trace("T?");
-				// 		if (c.def.trans == null) P0 else c.def.trans;
-				// 	case "R":
-				// 		trace("R?");
-				// 		M = F;
-				// 		if (c.def.rotate == null && c.def.preRot == null) P0 else if (c.def.rotate == null) c.def.preRot else if (c.def.preRot == null)
-				// 			c.def.rotate else {
-				// 			// var q = new h3d.Quat(), q2 = new h3d.Quat();
-				// 			// q2.initRotation(c.def.preRot.x, c.def.preRot.y, c.def.preRot.z);
-				// 			// q.initRotation(c.def.rotate.x, c.def.rotate.y, c.def.rotate.z);
-				// 			// q.multiply(q2, q);
-				// 			// q.toEuler().toPoint();
-				// 		}
-				// 	case "S":
-				// 		if (c.def.scale == null) P1 else c.def.scale;
-				// 	default:
-				// 		trace("Unknown curve " + model.getName() + "." + cname);
-				// 		continue;
-				// }
-				// var hasValue = false;
-				// if (data.x != null && roundValues(data.x, def.x, M))
-				// 	hasValue = true;
-				// if (data.y != null && roundValues(data.y, def.y, M))
-				// 	hasValue = true;
-				// if (data.z != null && roundValues(data.z, def.z, M))
-				// 	hasValue = true;
-				// // no meaningful value found
-				// if (!hasValue)
-				// 	continue;
-				// var keyCount = 0;
-				// if (data.x != null)
-				// 	keyCount = data.x.length;
-				// if (data.y != null)
-				// 	keyCount = data.y.length;
-				// if (data.z != null)
-				// 	keyCount = data.z.length;
-				// if (data.x == null)
-				// 	data.x = [for (i in 0...keyCount) def.x];
-				// if (data.y == null)
-				// 	data.y = [for (i in 0...keyCount) def.y];
-				// if (data.z == null)
-				// 	data.z = [for (i in 0...keyCount) def.z];
-				// switch (cname) {
-				// 	case "T":
-				// 		c.t = data;
-				// 	case "R":
-				// 		c.r = data;
-				// 	case "S":
-				// 		c.s = data;
-				// 	default:
-				// 		throw "assert";
-				// }
-				trace(curves);
+				var M = 1.0;
+				var def = switch (cname) {
+					case "T":
+						if (c.def.trans == null) P0 else c.def.trans;
+					case "R":
+						M = F;
+						if (c.def.rotate == null && c.def.preRot == null) P0 else if (c.def.rotate == null) c.def.preRot else if (c.def.preRot == null)
+							c.def.rotate else {
+							new Vertex(1, 1, 1);
+							// var q = new h3d.Quat(), q2 = new h3d.Quat();
+							// q2.initRotation(c.def.preRot.x, c.def.preRot.y, c.def.preRot.z);
+							// q.initRotation(c.def.rotate.x, c.def.rotate.y, c.def.rotate.z);
+							// q.multiply(q2, q);
+							// q.toEuler().toPoint();
+						}
+					case "S":
+						if (c.def.scale == null) P1 else c.def.scale;
+					default:
+						trace("Unknown curve " + model.getName() + "." + cname);
+						continue;
+				}
+				var hasValue = false;
+				if (data.x != null && roundValues(data.x, def.x, M))
+					hasValue = true;
+				if (data.y != null && roundValues(data.y, def.y, M))
+					hasValue = true;
+				if (data.z != null && roundValues(data.z, def.z, M))
+					hasValue = true;
+				// no meaningful value found
+				if (!hasValue)
+					continue;
+				var keyCount = 0;
+				if (data.x != null)
+					keyCount = data.x.length;
+				if (data.y != null)
+					keyCount = data.y.length;
+				if (data.z != null)
+					keyCount = data.z.length;
+				if (data.x == null)
+					data.x = [for (i in 0...keyCount) def.x];
+				if (data.y == null)
+					data.y = [for (i in 0...keyCount) def.y];
+				if (data.z == null)
+					data.z = [for (i in 0...keyCount) def.z];
+				switch (cname) {
+					case "T":
+						c.t = data;
+					case "R":
+						c.r = data;
+					case "S":
+						c.s = data;
+					default:
+						throw "assert";
+				}
+				// trace(curves);
 			}
 
 		trace("动画名：", animName, animNodes.length);
-		trace(allTimes);
+		trace(Json.stringify(allTimes));
+
+		// var allTimes = [for (a in allTimes) a];
+
+		// trace(allTimes);
+
+		// var iterator = curves.iterator();
+		// while (iterator.hasNext())
+		// 	trace(iterator.next());
+
+		// 开始生成POSE
 	}
 
 	function getObjectCurve(curves:Map<Int, AnimCurve>, model:FbxNode, curveName:String, animName:String):AnimCurve {
@@ -497,6 +508,7 @@ class FBXParser extends Object3DBaseData {
 		var objects:Array<FBXJoint> = [];
 		var hobjects = new Map<Int, FBXJoint>();
 		var skeleton = new Skeleton();
+		var skeletonPose = new SkeletonPose();
 		for (index => model in array) {
 			var mtype = model.getType();
 			var isJoint = mtype == "LimbNode" && !isNullJoint(model);
@@ -508,7 +520,7 @@ class FBXParser extends Object3DBaseData {
 				var joint = new SkeletonJoint();
 				joint.name = model.getName();
 				joint.id = "j" + model.getId();
-				skeleton.joints.push(joint);
+				skeletonPose.joints.push(joint);
 				o.joint = joint;
 			}
 			o.model = model;
@@ -537,7 +549,8 @@ class FBXParser extends Object3DBaseData {
 			o.parent = op;
 		}
 
-		skeleton.updateJoints();
+		skeletonPose.updateJoints();
+		skeleton.poses.push(skeletonPose);
 		// 更新偏移矩阵
 		for (o in objects) {
 			if (o.joint == null)
@@ -851,9 +864,6 @@ class FBXParser extends Object3DBaseData {
 				default:
 			}
 
-		if (d.trans != null)
-			trace(model.getName(), d.trans.x, d.trans.y, d.trans.z);
-
 		if (model.getType() == "LimbNode") {
 			var subDef = getParent(model, "Deformer", true);
 			if (subDef != null) {
@@ -980,5 +990,9 @@ private class AnimCurve {
 	public function new(def, object) {
 		this.def = def;
 		this.object = object;
+	}
+
+	public function toString():String {
+		return "object=" + object + " t=" + t + " r=" + r + " s=" + s;
 	}
 }

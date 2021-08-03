@@ -12,14 +12,30 @@ class Skeleton {
 	public var numJoints(get, never):Int;
 
 	/**
-	 * 骨骼列表
+	 * 骨骼姿势，0永远存放0帧骨架
 	 */
-	public var joints:Vector<SkeletonJoint> = new Vector();
+	public var poses:Vector<SkeletonPose> = new Vector();
+
+	/**
+	 * 指定Pose渲染索引
+	 */
+	public var poseIndex:Int = 0;
+
+	public var joints(get, never):Vector<SkeletonJoint>;
+
+	function get_joints():Vector<SkeletonJoint> {
+		if (poses[poseIndex] == null) {
+			return null;
+		}
+		return poses[poseIndex].joints;
+	}
 
 	public function new() {}
 
 	function get_numJoints():Int {
-		return joints.length;
+		if (poses.length == 0)
+			return 0;
+		return poses[0].joints.length;
 	}
 
 	/**
@@ -28,6 +44,8 @@ class Skeleton {
 	 * @return 返回骨骼
 	 */
 	public function jointFromName(jointName:String):SkeletonJoint {
+		if (joints == null)
+			return null;
 		var jointIndex:Int = jointIndexFromName(jointName);
 		if (jointIndex != -1)
 			return joints[jointIndex];
@@ -40,6 +58,8 @@ class Skeleton {
 	 * @param jointName 骨骼名称
 	 */
 	public function jointIndexFromName(jointName:String):Int {
+		if (joints == null)
+			return null;
 		var jointIndex:Int = 0;
 		for (joint in joints) {
 			if (joint.name == jointName)
@@ -55,6 +75,8 @@ class Skeleton {
 	 * @return 返回骨骼
 	 */
 	public function jointFromId(jointId:String):SkeletonJoint {
+		if (joints == null)
+			return null;
 		var jointIndex:Int = jointIndexFromId(jointId);
 		if (jointIndex != -1)
 			return joints[jointIndex];
@@ -67,6 +89,8 @@ class Skeleton {
 	 * @param jointName 骨骼名称
 	 */
 	public function jointIndexFromId(jointId:String):Int {
+		if (joints == null)
+			return null;
 		var jointIndex:Int = 0;
 		for (joint in joints) {
 			if (joint.id == jointId)
@@ -76,16 +100,4 @@ class Skeleton {
 		return -1;
 	}
 
-	/**
-	 * 更新骨架
-	 * @return Int
-	 */
-	public function updateJoints():Void {
-		for (i in 0...joints.length) {
-			var joint = joints[i];
-			if (joint.parent == null)
-				joint.updatenverseBindPose();
-			joint.index = i;
-		}
-	}
 }
