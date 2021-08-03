@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import zygame.data.anim.AnimationClipNode;
 import zygame.data.anim.SkeletonPose;
 import lime.utils.Float32Array;
 import lime.math.Vector4;
@@ -117,7 +118,8 @@ class FBXParser extends Object3DBaseData {
 		var curves = new Map();
 		var P0 = new Vertex(0, 0, 0);
 		var P1 = new Vertex(1, 1, 1);
-		var F = Math.PI / 180;
+		// var F = Math.PI / 180;
+		var F = 1;
 		var allTimes = new Map();
 
 		if (animNode != null)
@@ -296,16 +298,50 @@ class FBXParser extends Object3DBaseData {
 		var allTimes = [for (a in allTimes) a];
 
 		trace(allTimes);
+		var skeleton:Skeleton = getSkeleton("main");
+		var node = new AnimationClipNode(animName);
 		for (index => t in allTimes) {
 			// 开始创建姿势
-			var pose = new SkeletonPose();
+			var pose = skeleton.pose.copy();
+			var iterator = curves.iterator();
+			while (iterator.hasNext()) {
+				var obj = iterator.next();
+				// trace(obj.object);
+				var joint = pose.jointFromName(obj.object);
+				if (joint == null)
+					continue;
+				// 平移
+				var tansIndex = obj.t != null ? obj.t.t.indexOf(t) : -1;
+				if (tansIndex != -1) {
+					joint.x = obj.t.x[tansIndex];
+					joint.y = obj.t.y[tansIndex];
+					joint.z = obj.t.z[tansIndex];
+				} else {
+					// 不存在过渡的时候，是否考虑拷贝上一帧
+				}
+				// 旋转
+				var rotaIndex = obj.r != null ? obj.r.t.indexOf(t) : -1;
+				if (rotaIndex != -1) {
+					joint.rotationX = obj.r.x[rotaIndex];
+					joint.rotationY = obj.r.y[rotaIndex];
+					joint.rotationZ = obj.r.z[rotaIndex];
+				} else {
+					// 不存在过渡的时候，是否考虑拷贝上一帧
+				}
+				// 缩放
+				var scaleIndex = obj.s != null ? obj.s.t.indexOf(t) : -1;
+				if (scaleIndex != -1) {
+					joint.x = obj.s.x[scaleIndex];
+					joint.y = obj.s.y[scaleIndex];
+					joint.z = obj.s.z[scaleIndex];
+				} else {
+					// 不存在过渡的时候，是否考虑拷贝上一帧
+				}
+			}
+			pose.updateJoints();
+			node.poses.push(pose);
 		}
-
-		// var iterator = curves.iterator();
-		// while (iterator.hasNext())
-		// 	trace(iterator.next());
-
-		// 开始生成POSE
+		this.setNodeClip(node.name, node);
 	}
 
 	function getObjectCurve(curves:Map<Int, AnimCurve>, model:FbxNode, curveName:String, animName:String):AnimCurve {
@@ -553,21 +589,17 @@ class FBXParser extends Object3DBaseData {
 			o.parent = op;
 		}
 
-		skeletonPose.updateJoints();
-		skeleton.pose = skeletonPose;
 		// 更新偏移矩阵
 		for (o in objects) {
 			if (o.joint == null)
 				continue;
 			if (o.defaultMatrixes.transPos != null) {
-				o.joint.inverseBindPose.prepend(o.defaultMatrixes.transPos);
+				o.joint.transPos = o.defaultMatrixes.transPos;
 			}
 		}
+		skeletonPose.updateJoints();
+		skeleton.pose = skeletonPose;
 		skeletons.set("main", skeleton);
-
-		// for (joint in objects) {
-		// trace("深度：",joint.model.getName() ,joint,getDepth(joint));
-		// }
 
 		#if !undisplay
 		display3d = new DisplayObject3D();

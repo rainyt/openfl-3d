@@ -57,6 +57,11 @@ class SkeletonJoint {
 
 	public var z:Float = 0;
 
+	/**
+	 * 可能存在一个偏移值，如果存在，则与结果矩阵相乘
+	 */
+	public var transPos:Matrix4;
+
 	public function new() {}
 
 	private var __transform3D:Matrix4;
@@ -69,13 +74,46 @@ class SkeletonJoint {
 		__transform3D.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
 		__transform3D.appendTranslation(this.x, this.y, this.z);
 		if (this.parent == null) {
+			trace("Root:",this.name, this.x, this.y, this.z);
 			inverseBindPose = __transform3D;
 		} else {
 			inverseBindPose = this.parent.inverseBindPose.clone();
 			inverseBindPose.prepend(__transform3D);
 		}
+
 		for (index => value in childs) {
 			value.updatenverseBindPose();
 		}
+	}
+
+	/**
+	 * 更新默认矩阵，但需要先调用updatenverseBindPose
+	 */
+	public function updateTransPos():Void {
+		if (transPos != null && inverseBindPose != null)
+			inverseBindPose.prepend(transPos);
+	}
+
+	/**
+	 * 这里的拷贝不会拷贝parent和childs
+	 * @return SkeletonJoint
+	 */
+	public function copy():SkeletonJoint {
+		var joint = new SkeletonJoint();
+		joint.name = name;
+		joint.parentId = parentId;
+		joint.id = id;
+		joint.index = index;
+		joint.rotationX = rotationX;
+		joint.rotationY = rotationY;
+		joint.rotationZ = rotationZ;
+		joint.scaleX = scaleX;
+		joint.scaleY = scaleY;
+		joint.scaleZ = scaleZ;
+		joint.x = x;
+		joint.y = y;
+		joint.z = z;
+		joint.transPos = transPos;
+		return joint;
 	}
 }

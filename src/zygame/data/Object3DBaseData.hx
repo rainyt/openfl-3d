@@ -1,5 +1,6 @@
 package zygame.data;
 
+import zygame.data.anim.AnimationClipNode;
 import zygame.data.anim.Skeleton;
 import zygame.display3d.DisplayObject3D;
 import openfl.Vector;
@@ -19,6 +20,11 @@ class Object3DBaseData {
 	 * 骨骼列表
 	 */
 	public var skeletons:Map<String, Skeleton> = [];
+
+	/**
+	 * 动画列表
+	 */
+	public var nodes:Map<String, AnimationClipNode> = [];
 
 	public function new() {}
 
@@ -58,6 +64,25 @@ class Object3DBaseData {
 	 */
 	public function getSkeleton(name:String):Skeleton {
 		return skeletons.get(name);
+	}
+
+	/**
+	 * 根据名字绑定骨架
+	 * @param name 
+	 * @param geometry 
+	 */
+	public function setNodeClip(name:String, anim:AnimationClipNode):Void {
+		trace("add AnimationClipNode:", name);
+		nodes.set(name, anim);
+	}
+
+	/**
+	 * 根据名字获取骨架
+	 * @param name 
+	 * @return Geometry
+	 */
+	public function getNodeClip(name:String):AnimationClipNode {
+		return nodes.get(name);
 	}
 
 	public function getGeometryAt(arg0:Int):GeometryData {
