@@ -12,9 +12,9 @@ class Skeleton {
 	public var numJoints(get, never):Int;
 
 	/**
-	 * 骨骼姿势，0永远存放0帧骨架
+	 * 骨架会有一个默认姿势
 	 */
-	public var poses:Vector<SkeletonPose> = new Vector();
+	public var pose:SkeletonPose;
 
 	/**
 	 * 指定Pose渲染索引
@@ -24,18 +24,13 @@ class Skeleton {
 	public var joints(get, never):Vector<SkeletonJoint>;
 
 	function get_joints():Vector<SkeletonJoint> {
-		if (poses[poseIndex] == null) {
-			return null;
-		}
-		return poses[poseIndex].joints;
+		return pose == null ? null : pose.joints;
 	}
 
 	public function new() {}
 
 	function get_numJoints():Int {
-		if (poses.length == 0)
-			return 0;
-		return poses[0].joints.length;
+		return pose == null ? 0 : pose.joints.length;
 	}
 
 	/**
@@ -99,5 +94,4 @@ class Skeleton {
 		}
 		return -1;
 	}
-
 }

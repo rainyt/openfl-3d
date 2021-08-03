@@ -157,7 +157,7 @@ class FBXParser extends Object3DBaseData {
 					// this should give significant-enough key
 					var it = Std.int(t / 200000);
 					// trace("it=",it / 200 / 1000,t);
-					allTimes.set(it, t / 200000 / 200 / 1000);
+					allTimes.set(it, t);
 				}
 
 				// handle special curves
@@ -293,9 +293,13 @@ class FBXParser extends Object3DBaseData {
 		trace("动画名：", animName, animNodes.length);
 		trace(Json.stringify(allTimes));
 
-		// var allTimes = [for (a in allTimes) a];
+		var allTimes = [for (a in allTimes) a];
 
-		// trace(allTimes);
+		trace(allTimes);
+		for (index => t in allTimes) {
+			// 开始创建姿势
+			var pose = new SkeletonPose();
+		}
 
 		// var iterator = curves.iterator();
 		// while (iterator.hasNext())
@@ -550,7 +554,7 @@ class FBXParser extends Object3DBaseData {
 		}
 
 		skeletonPose.updateJoints();
-		skeleton.poses.push(skeletonPose);
+		skeleton.pose = skeletonPose;
 		// 更新偏移矩阵
 		for (o in objects) {
 			if (o.joint == null)

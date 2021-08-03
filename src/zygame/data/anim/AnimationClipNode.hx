@@ -1,5 +1,6 @@
 package zygame.data.anim;
 
+import openfl.Vector;
 import zygame.display3d.DisplayObject3D;
 
 /**
@@ -14,7 +15,7 @@ class AnimationClipNode {
 	/**
 	 * 骨骼
 	 */
-	public var skeleton:Skeleton;
+	public var poses:Vector<SkeletonPose> = new Vector();
 
 	public function new(name:String) {
 		this.name = name;
@@ -24,8 +25,8 @@ class AnimationClipNode {
 	 * 更新
 	 */
 	public function update(dt:Float, display:DisplayObject3D):Void {
-		for (joint in skeleton.joints) {
-			// joint
-		}
+		// for (joint in skeleton.joints) {
+		// 	// joint
+		// }
 	}
 }
