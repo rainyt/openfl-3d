@@ -48,4 +48,44 @@ class Skeleton {
 		}
 		return -1;
 	}
+
+	/**
+	 * 通过ID获取骨骼 
+	 * @param jointName 骨骼名称
+	 * @return 返回骨骼
+	 */
+	public function jointFromId(jointId:String):SkeletonJoint {
+		var jointIndex:Int = jointIndexFromId(jointId);
+		if (jointIndex != -1)
+			return joints[jointIndex];
+		else
+			return null;
+	}
+
+	/**
+	 * 通过ID获取骨骼Index
+	 * @param jointName 骨骼名称
+	 */
+	public function jointIndexFromId(jointId:String):Int {
+		var jointIndex:Int = 0;
+		for (joint in joints) {
+			if (joint.id == jointId)
+				return jointIndex;
+			jointIndex++;
+		}
+		return -1;
+	}
+
+	/**
+	 * 更新骨架
+	 * @return Int
+	 */
+	public function updateJoints():Void {
+		for (i in 0...joints.length) {
+			var joint = joints[i];
+			if (joint.parent == null)
+				joint.updatenverseBindPose();
+			joint.index = i;
+		}
+	}
 }

@@ -1,5 +1,8 @@
 package zygame.display3d;
 
+import zygame.data.Vertex;
+import haxe.Json;
+import lime.utils.Float32Array;
 import zygame.data.GeometryData;
 import zygame.data.anim.Skeleton;
 import openfl.events.Event;
@@ -37,6 +40,10 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 */
 	public var geometryData(get, never):GeometryData;
 
+	function get_geometryData():GeometryData {
+		return __geometryData;
+	}
+
 	/**
 	 * 世界模型
 	 */
@@ -56,6 +63,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * 当前坐标的补充
 	 */
 	// public var transform3D:Matrix4;
+
+	/**
+	 * BUFFER数据
+	 */
+	public var buffers:Vector<Float>;
 
 	/**
 	 * 纹理
@@ -182,7 +194,26 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 绑定骨骼动画
 	 */
-	public var skeleton:Skeleton;
+	public var skeleton(get, set):Skeleton;
+
+	private var _skeleton:Skeleton;
+
+	function get_skeleton():Skeleton {
+		return _skeleton;
+	}
+
+	function set_skeleton(value:Skeleton):Skeleton {
+		_skeleton = value;
+		// 绑定到底层的所有3D对象
+		for (i in 0...this.numChildren) {
+			var display = this.getChildAt(i);
+			if (Std.isOfType(display, DisplayObject3D)) {
+				cast(display, DisplayObject3D).skeleton = value;
+			}
+		}
+		__updateGeometryData();
+		return value;
+	}
 
 	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
 		super();
@@ -195,7 +226,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (vertices == null || indices == null)
 			return;
 		var context = Lib.application.window.stage.context3D;
-		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 18);
+		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 17);
 		indexBuffer = context.createIndexBuffer(this.indices.length);
 		indexBuffer.uploadFromTypedArray(new UInt16Array(indices));
 
@@ -204,7 +235,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		this.setFrameEvent(true);
 		#end
 
-		var buffers:openfl.Vector<Float> = new openfl.Vector();
+		buffers = new openfl.Vector();
 
 		var num = Std.int(this.vertices.length / 3);
 		for (i in 0...num) {
@@ -228,23 +259,72 @@ class DisplayObject3D extends DisplayObjectContainer {
 				buffers.push(uvs[i * 2]);
 				buffers.push(uvs[i * 2 + 1]);
 			}
-			// 位移
+			// 骨骼索引，如果不存在则默认-1
+			buffers.push(-1);
+			buffers.push(-1);
+			buffers.push(-1);
+			buffers.push(-1);
+			// 骨骼权重，如果不存在则默认为0
 			buffers.push(0);
-			buffers.push(0);
-			buffers.push(0);
-			// 缩放
-			buffers.push(1);
-			buffers.push(1);
-			buffers.push(1);
-			// 旋转
 			buffers.push(0);
 			buffers.push(0);
 			buffers.push(0);
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
-		trace("buffers=", buffers);
-		trace("indices=", indices);
-		trace(buffers.length, vertices.length / 3, buffers.length / (vertices.length / 3));
+		// trace("indices=", indices);
+		// trace(buffers.length, vertices.length / 3, buffers.length / (vertices.length / 3));
+	}
+
+	private function __updateBuffersData(index:Int, start:Int, value:Float):Void {
+		var id = 17 * index + start;
+		buffers[id] = value;
+		// trace("update", start, "[", 17, index, start, "]", id, buffers.length);
+	}
+
+	/**
+	 * 更新Geometry的顶点属性
+	 */
+	private function __updateGeometryData():Void {
+		if (this.geometryData == null || skeleton == null) {
+			return;
+		}
+
+		var _maps:Map<Int, Int> = [];
+
+		// 更新权重和骨骼索引
+		if (this.geometryData.deformer != null) {
+			for (skin in this.geometryData.deformer.skins) {
+				var joint = skeleton.jointFromId(skin.bindJointId);
+				if (joint != null) {
+					for (i in 0...skin.indexes.length) {
+						var skinIndex = skin.indexes[i];
+						if (!_maps.exists(skinIndex)) {
+							_maps.set(skinIndex, 1);
+						} else {
+							_maps.set(skinIndex, _maps.get(skinIndex) + 1);
+						}
+						__updateBuffersData(skinIndex, 8 + _maps.get(skinIndex), joint.index);
+						__updateBuffersData(skinIndex, 12 + _maps.get(skinIndex), skin.weights[i]);
+					}
+				}
+			}
+			trace("映射索引影响结果：", _maps);
+			var num = Std.int(this.vertices.length / 3);
+			vertexBuffer.uploadFromVector(buffers, 0, num);
+			return;
+			trace("buffers=", buffers);
+			var step = 17;
+			var i = 9;
+			while (i < buffers.length) {
+				if (buffers[i] == -1) {
+					trace("这个顶点没有绑定？", i);
+				}
+				trace(i, step, buffers.length, "I", buffers[i], buffers[i + 1], buffers[i + 2], buffers[i + 3], "W", buffers[i + 4], buffers[i + 5],
+					buffers[i + 6], buffers[i + 7]);
+				i += step;
+			}
+			// trace("长度：",buffers.length);
+		}
 	}
 
 	#if zygame
@@ -342,22 +422,31 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var coord = gl.getAttribLocation(shaderProgram, "zy_coord");
 		context.setVertexBufferAt(coord, vertexBuffer, 7, FLOAT_2);
 
+		// 骨骼索引
+		var boneIndex = gl.getAttribLocation(shaderProgram, "boneIndex");
+		context.setVertexBufferAt(boneIndex, vertexBuffer, 9, FLOAT_4);
+
+		// 骨骼影响权重
+		var boneWeight = gl.getAttribLocation(shaderProgram, "boneWeight");
+		context.setVertexBufferAt(boneWeight, vertexBuffer, 13, FLOAT_4);
+
 		// 位移
-		var _matpos = gl.getAttribLocation(shaderProgram, "pos");
-		context.setVertexBufferAt(_matpos, vertexBuffer, 9, FLOAT_3);
+		// var _matpos = gl.getAttribLocation(shaderProgram, "pos");
+		// context.setVertexBufferAt(_matpos, vertexBuffer, 9, FLOAT_3);
 
 		// 缩放
-		var _matscale = gl.getAttribLocation(shaderProgram, "scale");
-		context.setVertexBufferAt(_matscale, vertexBuffer, 12, FLOAT_3);
+		// var _matscale = gl.getAttribLocation(shaderProgram, "scale");
+		// context.setVertexBufferAt(_matscale, vertexBuffer, 12, FLOAT_3);
 
 		// 旋转
-		var _matrotation = gl.getAttribLocation(shaderProgram, "rotation");
-		context.setVertexBufferAt(_matrotation, vertexBuffer, 15, FLOAT_3);
+		// var _matrotation = gl.getAttribLocation(shaderProgram, "rotation");
+		// context.setVertexBufferAt(_matrotation, vertexBuffer, 15, FLOAT_3);
 
 		/*=========Drawing the triangle===========*/
 
 		var modelViewMatrixIndex = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
 		var projectionMatrixIndex = gl.getUniformLocation(shaderProgram, "projectionMatrix");
+		var bonesMatrixIndex = gl.getUniformLocation(shaderProgram, "bonesMatrix");
 
 		var p = new Matrix4();
 		#if zygame
@@ -367,13 +456,24 @@ class DisplayObject3D extends DisplayObjectContainer {
 		#end
 
 		var m = __worldTransform3D.clone();
-		// if (transform3D != null) {
-		// m.prepend(transform3D);
-		// }
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
 
+		var bones = [];
+		if (skeleton != null) {
+			for (i in 0...skeleton.joints.length) {
+				var joint = skeleton.joints[i];
+				for (i in 0...16) {
+					bones.push(joint.inverseBindPose[i]);
+				}
+			}
+		}
+		if (bones.length != 0)
+			gl.uniformMatrix4fv(bonesMatrixIndex, false, new Float32Array(bones));
+
+		// trace("bones", bones.length, skeleton != null);
 		// Enable the depth test
+
 		gl.enable(gl.DEPTH_TEST);
 		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
@@ -437,9 +537,5 @@ class DisplayObject3D extends DisplayObjectContainer {
 			__worldTransform3D = cast(this.parent, DisplayObject3D).__worldTransform3D.clone();
 			__worldTransform3D.prepend(__transform3D);
 		}
-	}
-
-	function get_geometryData():GeometryData {
-		return __geometryData;
 	}
 }

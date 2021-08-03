@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import lime.utils.Float32Array;
 import lime.math.Vector4;
 import lime.math.Matrix4;
 import haxe.Json;
@@ -64,6 +65,8 @@ class FBXParser extends Object3DBaseData {
 			this.initFbxNode(child);
 		}
 
+		autoMerge();
+
 		// trace(invConnect);
 		for (child in root.childs) {
 			init(child);
@@ -89,7 +92,6 @@ class FBXParser extends Object3DBaseData {
 					if (getChilds(n, "AnimationCurveNode").length > 0)
 						animNodes.push(n);
 				}
-				
 			}
 		var animNode = switch (animNodes.length) {
 			case 0:
@@ -223,7 +225,7 @@ class FBXParser extends Object3DBaseData {
 					}
 				}
 
-				trace(cname,Json.stringify(c.def));
+				trace(cname, Json.stringify(c.def));
 
 				// this can happen when resampling anims due to rounding errors, let's ignore it for now
 				// if( data.y.length != times.length || data.z.length != times.length )
@@ -357,6 +359,136 @@ class FBXParser extends Object3DBaseData {
 		}
 	}
 
+	function autoMerge() {
+		// if we have multiple deformers on the same joint, let's merge the geometries
+		var toMerge = [], mergeGroups = new Map<Int, Array<FbxNode>>();
+		for (model in getAllModels()) {
+			// if (skipObjects.get(model.getName()))
+			// 	continue;
+			var mtype = model.getType();
+			var isJoint = mtype == "LimbNode" && (!isNullJoint(model));
+			if (!isJoint)
+				continue;
+			var deformers = getParents(model, "Deformer");
+			if (deformers.length <= 1)
+				continue;
+			var group = [];
+			for (d in deformers) {
+				var def = getParent(d, "Deformer");
+				if (def == null)
+					continue;
+				var geom = getParent(def, "Geometry");
+				if (geom == null)
+					continue;
+				var model2 = getParent(geom, "Model");
+				if (model2 == null)
+					continue;
+
+				var id = model2.getId();
+				var g = mergeGroups.get(id);
+				if (g != null) {
+					for (g in g) {
+						group.remove(g);
+						group.push(g);
+					}
+					toMerge.remove(g);
+				}
+				group.remove(model2);
+				group.push(model2);
+				mergeGroups.set(id, group);
+			}
+			toMerge.push(group);
+		}
+		for (group in toMerge) {
+			group.sort(function(m1, m2) return Reflect.compare(m1.getName(), m2.getName()));
+			for (g in toMerge)
+				if (g != group) {
+					var found = false;
+					for (m in group)
+						if (g.remove(m))
+							found = true;
+					if (found)
+						g.push(group[0]);
+				}
+			trace("需要合并：", [for (g in group) g.getName()]);
+			// mergeModels([for (g in group) g.getName()]);
+		}
+		trace("合并结束");
+	}
+
+	// public function mergeModels(modelNames:Array<String>) {
+	// 	if (modelNames.length <= 1)
+	// 		return;
+	// 	var models = getAllModels();
+	// 	function getModel(name) {
+	// 		for (m in models)
+	// 			if (m.getName() == name)
+	// 				return m;
+	// 		throw "Model not found " + name;
+	// 		return null;
+	// 	}
+	// 	var m = getModel(modelNames[0]);
+	// 	var geom = new Geometry(this, getChild(m, "Geometry"));
+	// 	var def = getChild(geom.getRoot(), "Deformer", true);
+	// 	var subDefs = getChilds(def, "Deformer");
+	// 	for (i in 1...modelNames.length) {
+	// 		var name = modelNames[i];
+	// 		var m2 = getModel(name);
+	// 		var geom2 = new Geometry(this, getChild(m2, "Geometry"));
+	// 		var vcount = Std.int(geom.getVertices().length / 3);
+	// 		skipObjects.set(name, true);
+	// 		// merge materials
+	// 		var mindex = [];
+	// 		var materials = getChilds(m, "Material");
+	// 		for (mat in getChilds(m2, "Material")) {
+	// 			var idx = materials.indexOf(mat);
+	// 			if (idx < 0) {
+	// 				idx = materials.length;
+	// 				materials.push(mat);
+	// 				addLink(m, mat);
+	// 			}
+	// 			mindex.push(idx);
+	// 		}
+	// 		// merge geometry
+	// 		geom.merge(geom2, mindex);
+	// 		// merge skinning
+	// 		var def2 = getChild(geom2.getRoot(), "Deformer", true);
+	// 		if (def2 != null) {
+	// 			if (def == null)
+	// 				throw m.getName() + " does not have a deformer but " + name + " has one";
+	// 			for (subDef in getChilds(def2, "Deformer")) {
+	// 				var subModel = getChild(subDef, "Model");
+	// 				var prevDef = null;
+	// 				for (s in subDefs)
+	// 					if (getChild(s, "Model") == subModel) {
+	// 						prevDef = s;
+	// 						break;
+	// 					}
+	// 				if (prevDef != null)
+	// 					removeLink(subDef, subModel);
+	// 				var idx = subDef.get("Indexes", true);
+	// 				if (idx == null)
+	// 					continue;
+	// 				if (prevDef == null) {
+	// 					addLink(def, subDef);
+	// 					removeLink(def2, subDef);
+	// 					subDefs.push(subDef);
+	// 					var idx = idx.getInts();
+	// 					for (i in 0...idx.length)
+	// 						idx[i] += vcount;
+	// 				} else {
+	// 					var pidx = prevDef.get("Indexes").getInts();
+	// 					for (i in idx.getInts())
+	// 						pidx.push(i + vcount);
+	// 					var weights = prevDef.get("Weights").getFloats();
+	// 					for (w in subDef.get("Weights").getFloats())
+	// 						weights.push(w);
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	private function buildHierarchy(array:Array<FbxNode>):Void {
 		if (array.length == 0) {
 			return;
@@ -395,12 +527,46 @@ class FBXParser extends Object3DBaseData {
 			if (op == null)
 				op = rootJoint; // if parent has been removed
 			op.childs.push(o);
-			if (o.joint != null)
+			if (o.joint != null) {
 				o.joint.parentId = op.model != null ? "j" + op.model.getId() : null;
+				if (op.joint != null) {
+					o.joint.parent = op.joint;
+					op.joint.childs.push(o.joint);
+				}
+			}
 			o.parent = op;
 		}
 
+		skeleton.updateJoints();
+		// 更新偏移矩阵
+		for (o in objects) {
+			if (o.joint == null)
+				continue;
+			var subDef = getParent(o.model, "Deformer", true);
+			if (o.defaultMatrixes.transPos != null) {
+				o.joint.inverseBindPose.prepend(o.defaultMatrixes.transPos);
+			} else {
+				trace("为什么没有transPos?", o.model.getName(), o.model.getType(), Json.stringify(getDefaultMatrixes(o.model)));
+				// 试试父节点？
+				// o.joint.inverseBindPose.prepend(new Matrix4());
+				if (o.parent != null && o.parent.defaultMatrixes != null && o.parent.defaultMatrixes.transPos != null) {
+					// o.joint.inverseBindPose.prepend(o.parent.defaultMatrixes.transPos);
+					o.joint.inverseBindPose = o.parent.joint.inverseBindPose;
+					trace("o.joint=", o.joint.index);
+					// 	o.defaultMatrixes.transPos = o.parent.defaultMatrixes.transPos;
+					// 	o.joint.inverseBindPose.prepend(o.defaultMatrixes.transPos);
+					// trace("父节点的有", o.parent.model.getName(),o.parent.model.get("Properties70"));
+				}
+				// else{
+				// trace("还是没有呀");
+				// }
+			}
+		}
 		skeletons.set("main", skeleton);
+
+		// for (joint in objects) {
+		// trace("深度：",joint.model.getName() ,joint,getDepth(joint));
+		// }
 
 		#if !undisplay
 		display3d = new DisplayObject3D();
@@ -436,9 +602,23 @@ class FBXParser extends Object3DBaseData {
 		}
 	}
 
+	/**
+	 * 计算深度
+	 * @param o 
+	 */
+	inline function getDepth(o:FBXJoint) {
+		var k = 0;
+		while (o.parent != null) {
+			o = o.parent;
+			k++;
+		}
+		return k;
+	}
+
 	function isNullJoint(model:FbxNode) {
-		if (getParents(model, "Deformer").length > 0)
+		if (getParents(model, "Deformer").length > 0) {
 			return false;
+		}
 		var parent = getParent(model, "Model", true);
 		if (parent == null)
 			return true;
@@ -662,7 +842,8 @@ class FBXParser extends Object3DBaseData {
 		if (d != null)
 			return d;
 		d = new DefaultMatrixes();
-		var F = Math.PI / 180;
+		// var F = Math.PI / 180;
+		var F = 1;
 		for (p in model.getAll("Properties70.P"))
 			switch (p.props[0].toString()) {
 				case "GeometricTranslation":
@@ -686,7 +867,13 @@ class FBXParser extends Object3DBaseData {
 				default:
 			}
 
-		defaultModelMatrixes.set(id, d);
+		if (model.getType() == "LimbNode") {
+			var subDef = getParent(model, "Deformer", true);
+			if (subDef != null) {
+				d.transPos = new Matrix4(new Float32Array(subDef.get("Transform").getFloats()));
+			}
+			defaultModelMatrixes.set(id, d);
+		}
 		return d;
 	}
 
@@ -744,6 +931,11 @@ class DefaultMatrixes {
 			mesh.rotationY = rotate.y * 180 / Math.PI;
 			mesh.rotationZ = rotate.z * 180 / Math.PI;
 		}
+		if (preRot != null) {
+			mesh.rotationX += preRot.x * 180 / Math.PI;
+			mesh.rotationY += preRot.y * 180 / Math.PI;
+			mesh.rotationZ += preRot.z * 180 / Math.PI;
+		}
 		if (trans != null) {
 			mesh.x = trans.x;
 			mesh.y = trans.y;
@@ -757,15 +949,17 @@ class DefaultMatrixes {
 			joint.scaleX = this.scale.z;
 		}
 		if (rotate != null) {
-			joint.rotationX = rotate.x * 180 / Math.PI;
-			joint.rotationY = rotate.y * 180 / Math.PI;
-			joint.rotationZ = rotate.z * 180 / Math.PI;
+			joint.rotationX = rotate.x;
+			joint.rotationY = rotate.y;
+			joint.rotationZ = rotate.z;
 		}
 		if (trans != null) {
 			joint.x = trans.x;
 			joint.y = trans.y;
 		}
 	}
+
+	public var transPos:Matrix4;
 }
 
 private class AnimCurve {

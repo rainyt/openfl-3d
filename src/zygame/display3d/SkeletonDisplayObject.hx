@@ -15,6 +15,7 @@ class SkeletonDisplayObject extends DisplayObject3D {
 			joints.set(joint.id, display);
 			display.x = joint.x;
 			display.y = joint.y;
+			display.z = joint.z;
 			display.scaleX = joint.scaleX;
 			display.scaleY = joint.scaleY;
 			display.scaleZ = joint.scaleZ;

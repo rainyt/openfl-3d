@@ -5,6 +5,7 @@ import glsl.Sampler2D;
 import VectorMath;
 import glsl.OpenFLShader;
 
+// @:debug
 @:build(glsl.macro.GLSLCompileMacro.build("glsl"))
 class DisplayObject3DShader {
 	public var gl_Position:Dynamic;
@@ -17,21 +18,6 @@ class DisplayObject3DShader {
 	@:attribute public var zy_pos:Vec3;
 
 	/**
-	 * 移动点
-	 */
-	@:attribute public var pos:Vec3;
-
-	/**
-	 * 缩放比
-	 */
-	@:attribute public var scale:Vec3;
-
-	/**
-	 * 旋转角度
-	 */
-	@:attribute public var rotation:Vec3;
-
-	/**
 	 * 3D顶点颜色
 	 */
 	@:attribute public var zy_color:Vec4;
@@ -40,6 +26,16 @@ class DisplayObject3DShader {
 	 * 3D纹理
 	 */
 	@:attribute public var zy_coord:Vec2;
+
+	/**
+	 * 骨骼索引
+	 */
+	@:attribute public var boneIndex:Vec4;
+
+	/**
+	 * 骨骼影响权重
+	 */
+	@:attribute public var boneWeight:Vec4;
 
 	/**
 	 * 相机模型矩阵
@@ -51,11 +47,30 @@ class DisplayObject3DShader {
 	 */
 	@:uniform public var projectionMatrix:Mat4;
 
+	/**
+	 * 骨骼动画 最大支持68根骨头
+	 */
+	@:arrayLen(68)
+	@:uniform public var bonesMatrix:Array<Mat4>;
+
 	@:varying public var vColor:Vec4;
 
 	@:varying public var vCoord:Vec2;
 
 	@:uniform public var texture0:Sampler2D;
+
+	@:vertexglsl public function getBoneMatrixByIndex(i:Float):Mat4 {
+		var bone:Mat4 = bonesMatrix[int(i)];
+		return bone;
+	}
+
+	@:vertexglsl public function getBoneMatrix(a_weights:Vec4, a_indices:Vec4):Mat4 {
+		var skinMat:Mat4 = a_weights.x * getBoneMatrixByIndex(a_indices.x);
+		skinMat += a_weights.y * getBoneMatrixByIndex(a_indices.y);
+		skinMat += a_weights.z * getBoneMatrixByIndex(a_indices.z);
+		skinMat += a_weights.w * getBoneMatrixByIndex(a_indices.w);
+		return skinMat;
+	}
 
 	/**
 	 * 旋转实现
@@ -123,13 +138,25 @@ class DisplayObject3DShader {
 	// @:uniform public var projectionMatrix:Mat4;
 	public function vertex() {
 		// 缩放 -> 旋转 -> 平移
-		var scaleMat4:Mat4 = scaleXYZ(scale.x, scale.y, scale.z);
-		var rotaionMat4X:Mat4 = rotaion(rotation.x, vec3(1, 0, 0), vec3(0));
-		var rotaionMat4Y:Mat4 = rotaion(rotation.y, vec3(0, 1, 0), vec3(0));
-		var rotaionMat4Z:Mat4 = rotaion(rotation.z, vec3(0, 0, 1), vec3(0));
-		var transMat4:Mat4 = translation(pos.x, pos.y, pos.z);
+		// var scaleMat4:Mat4 = scaleXYZ(scale.x, scale.y, scale.z);
+		// var rotaionMat4X:Mat4 = rotaion(rotation.x, vec3(1, 0, 0), vec3(0));
+		// var rotaionMat4Y:Mat4 = rotaion(rotation.y, vec3(0, 1, 0), vec3(0));
+		// var rotaionMat4Z:Mat4 = rotaion(rotation.z, vec3(0, 0, 1), vec3(0));
+		// var transMat4:Mat4 = translation(0.5, 0.5, 0);
 		// gl_Position = projectionMatrix * modelViewMatrix * vec4(zy_pos, 1.0) * transMat4 * rotaionMat4X * rotaionMat4Y * rotaionMat4Z * scaleMat4;
-		gl_Position = projectionMatrix * (modelViewMatrix * rotaionMat4X * rotaionMat4Y * rotaionMat4Z * scaleMat4 + transMat4) * vec4(zy_pos, 1.0);
+		// gl_Position = projectionMatrix * (modelViewMatrix * rotaionMat4X * rotaionMat4Y * rotaionMat4Z * scaleMat4 + transMat4) * vec4(zy_pos, 1.0);
+		//
+		var mat:Mat4 = modelViewMatrix;
+		if (boneIndex.x != -1) {
+			var bonemat:Mat4 = getBoneMatrix(boneWeight, boneIndex);
+			mat = mat * bonemat;
+		}
+		// 权重 和 骨骼矩阵
+		// var mat2:Mat4 =  * (boneWeight * bonesMatrix[int(boneIndex)]);
+		// var mat:Mat4 = (boneWeight * bonesMatrix[int(boneIndex)]) * transMat4;
+		// mat = boneWeight * bonesMatrix[int(boneIndex)];
+		// gl_Position = projectionMatrix * mat * vec4(zy_pos, 1.0);
+		gl_Position = projectionMatrix * (mat) * vec4(zy_pos, 1.0);
 		vColor = zy_color;
 		vCoord = zy_coord;
 	}
@@ -137,5 +164,9 @@ class DisplayObject3DShader {
 	@:precision("mediump float")
 	public function fragment() {
 		gl_FragColor = texture2D(texture0, vCoord);
+	}
+
+	public function int(a:Dynamic):Dynamic {
+		return a;
 	}
 }
