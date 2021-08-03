@@ -308,22 +308,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 					}
 				}
 			}
-			trace("映射索引影响结果：", _maps);
+			// trace("映射索引影响结果：", _maps);
 			var num = Std.int(this.vertices.length / 3);
 			vertexBuffer.uploadFromVector(buffers, 0, num);
-			return;
-			trace("buffers=", buffers);
-			var step = 17;
-			var i = 9;
-			while (i < buffers.length) {
-				if (buffers[i] == -1) {
-					trace("这个顶点没有绑定？", i);
-				}
-				trace(i, step, buffers.length, "I", buffers[i], buffers[i + 1], buffers[i + 2], buffers[i + 3], "W", buffers[i + 4], buffers[i + 5],
-					buffers[i + 6], buffers[i + 7]);
-				i += step;
-			}
-			// trace("长度：",buffers.length);
 		}
 	}
 

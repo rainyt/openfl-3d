@@ -542,24 +542,8 @@ class FBXParser extends Object3DBaseData {
 		for (o in objects) {
 			if (o.joint == null)
 				continue;
-			var subDef = getParent(o.model, "Deformer", true);
 			if (o.defaultMatrixes.transPos != null) {
 				o.joint.inverseBindPose.prepend(o.defaultMatrixes.transPos);
-			} else {
-				trace("为什么没有transPos?", o.model.getName(), o.model.getType(), Json.stringify(getDefaultMatrixes(o.model)));
-				// 试试父节点？
-				// o.joint.inverseBindPose.prepend(new Matrix4());
-				if (o.parent != null && o.parent.defaultMatrixes != null && o.parent.defaultMatrixes.transPos != null) {
-					// o.joint.inverseBindPose.prepend(o.parent.defaultMatrixes.transPos);
-					o.joint.inverseBindPose = o.parent.joint.inverseBindPose;
-					trace("o.joint=", o.joint.index);
-					// 	o.defaultMatrixes.transPos = o.parent.defaultMatrixes.transPos;
-					// 	o.joint.inverseBindPose.prepend(o.defaultMatrixes.transPos);
-					// trace("父节点的有", o.parent.model.getName(),o.parent.model.get("Properties70"));
-				}
-				// else{
-				// trace("还是没有呀");
-				// }
 			}
 		}
 		skeletons.set("main", skeleton);
@@ -867,6 +851,9 @@ class FBXParser extends Object3DBaseData {
 				default:
 			}
 
+		if (d.trans != null)
+			trace(model.getName(), d.trans.x, d.trans.y, d.trans.z);
+
 		if (model.getType() == "LimbNode") {
 			var subDef = getParent(model, "Deformer", true);
 			if (subDef != null) {
@@ -939,6 +926,7 @@ class DefaultMatrixes {
 		if (trans != null) {
 			mesh.x = trans.x;
 			mesh.y = trans.y;
+			mesh.z = trans.z;
 		}
 	}
 
@@ -956,6 +944,7 @@ class DefaultMatrixes {
 		if (trans != null) {
 			joint.x = trans.x;
 			joint.y = trans.y;
+			joint.z = trans.z;
 		}
 	}
 
