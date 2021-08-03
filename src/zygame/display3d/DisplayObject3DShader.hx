@@ -11,6 +11,8 @@ class DisplayObject3DShader {
 
 	public var gl_FragColor:Dynamic;
 
+	public var gl_FragCoord:Dynamic;
+
 	/**
 	 * 3D顶点
 	 */
@@ -85,7 +87,9 @@ class DisplayObject3DShader {
 
 	@:precision("mediump float")
 	public function fragment() {
-		gl_FragColor = texture2D(texture0, vCoord);
+		var color:Vec4 = texture2D(texture0, vCoord);
+		var f:Float = gl_FragCoord.z;
+		gl_FragColor = color * vec4(vec3(f), 1);
 	}
 
 	public function int(a:Dynamic):Dynamic {

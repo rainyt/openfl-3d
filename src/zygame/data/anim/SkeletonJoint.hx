@@ -74,7 +74,6 @@ class SkeletonJoint {
 		__transform3D.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
 		__transform3D.appendTranslation(this.x, this.y, this.z);
 		if (this.parent == null) {
-			trace("Root:",this.name, this.x, this.y, this.z);
 			inverseBindPose = __transform3D;
 		} else {
 			inverseBindPose = this.parent.inverseBindPose.clone();

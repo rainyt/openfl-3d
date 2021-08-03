@@ -458,7 +458,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (bones.length != 0)
 			gl.uniformMatrix4fv(bonesMatrixIndex, false, new Float32Array(bones));
 
-		// trace("bones", bones.length, skeleton != null);
 		// Enable the depth test
 
 		gl.enable(gl.DEPTH_TEST);

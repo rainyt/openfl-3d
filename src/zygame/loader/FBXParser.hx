@@ -304,10 +304,12 @@ class FBXParser extends Object3DBaseData {
 			// 开始创建姿势
 			var pose = skeleton.pose.copy();
 			var iterator = curves.iterator();
+			var lastpose = node.poses.length > 0 ? node.poses[node.poses.length - 1] : null;
 			while (iterator.hasNext()) {
 				var obj = iterator.next();
 				// trace(obj.object);
 				var joint = pose.jointFromName(obj.object);
+				var lastjoint = lastpose != null ? lastpose.jointFromName(obj.object) : null;
 				if (joint == null)
 					continue;
 				// 平移
@@ -318,6 +320,12 @@ class FBXParser extends Object3DBaseData {
 					joint.z = obj.t.z[tansIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
+					trace("不存在过渡？");
+					if (lastjoint != null) {
+						joint.x = lastjoint.x;
+						joint.y = lastjoint.y;
+						joint.z = lastjoint.z;
+					}
 				}
 				// 旋转
 				var rotaIndex = obj.r != null ? obj.r.t.indexOf(t) : -1;
@@ -327,15 +335,27 @@ class FBXParser extends Object3DBaseData {
 					joint.rotationZ = obj.r.z[rotaIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
+					trace("不存在旋转？");
+					if (lastjoint != null) {
+						joint.rotationX = lastjoint.rotationX;
+						joint.rotationY = lastjoint.rotationY;
+						joint.rotationZ = lastjoint.rotationZ;
+					}
 				}
 				// 缩放
 				var scaleIndex = obj.s != null ? obj.s.t.indexOf(t) : -1;
 				if (scaleIndex != -1) {
-					joint.x = obj.s.x[scaleIndex];
-					joint.y = obj.s.y[scaleIndex];
-					joint.z = obj.s.z[scaleIndex];
+					joint.scaleX = obj.s.x[scaleIndex];
+					joint.scaleY = obj.s.y[scaleIndex];
+					joint.scaleZ = obj.s.z[scaleIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
+					trace("不存在缩放？");
+					if (lastjoint != null) {
+						joint.scaleX = lastjoint.scaleX;
+						joint.scaleY = lastjoint.scaleY;
+						joint.scaleZ = lastjoint.scaleZ;
+					}
 				}
 			}
 			pose.updateJoints();
@@ -551,10 +571,11 @@ class FBXParser extends Object3DBaseData {
 		var skeletonPose = new SkeletonPose();
 		for (index => model in array) {
 			var mtype = model.getType();
-			var isJoint = mtype == "LimbNode" && !isNullJoint(model);
+			var isJoint = (mtype == "LimbNode" && !isNullJoint(model) || mtype == "Root");
 			var o = new FBXJoint();
 			o.isJoint = isJoint;
 			o.isMesh = mtype == "Mesh";
+			trace(model.getName(), mtype);
 			if (isJoint) {
 				// 节点
 				var joint = new SkeletonJoint();
@@ -562,6 +583,8 @@ class FBXParser extends Object3DBaseData {
 				joint.id = "j" + model.getId();
 				skeletonPose.joints.push(joint);
 				o.joint = joint;
+			} else {
+				trace("不是骨骼：", model.getName());
 			}
 			o.model = model;
 			o.defaultMatrixes = getDefaultMatrixes(model);
@@ -653,11 +676,14 @@ class FBXParser extends Object3DBaseData {
 			return false;
 		}
 		var parent = getParent(model, "Model", true);
-		if (parent == null)
+		if (parent == null) {
+			trace("这个原因");
 			return true;
+		}
 		var t = parent.getType();
 		if (t == "LimbNode" || t == "Root")
 			return false;
+		trace("这个原因");
 		return true;
 	}
 
