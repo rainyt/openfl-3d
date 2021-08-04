@@ -2,7 +2,15 @@ package zygame.data.anim;
 
 import openfl.Vector;
 
+/**
+ * 骨骼姿势
+ */
 class SkeletonPose {
+	/**
+	 * 时间戳
+	 */
+	public var timestamp:Float = 0;
+
 	/**
 	 * 骨骼列表
 	 */
@@ -32,6 +40,7 @@ class SkeletonPose {
 
 	public function copy():SkeletonPose {
 		var pose = new SkeletonPose();
+		pose.timestamp = this.timestamp;
 		var map = new Map<String, SkeletonJoint>();
 		for (joint in joints) {
 			var j = joint.copy();

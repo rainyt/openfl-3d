@@ -302,12 +302,16 @@ class FBXParser extends Object3DBaseData {
 
 		var allTimes = [for (a in allTimes) a];
 
-		trace(allTimes);
+		// trace(allTimes);
 		var skeleton:Skeleton = getSkeleton("main");
 		var node = new AnimationClipNode(animName);
+		var maxTime = allTimes[allTimes.length - 1];
+
 		for (index => t in allTimes) {
 			// 开始创建姿势
 			var pose = skeleton.pose.copy();
+			pose.timestamp = t / 200000 / 200 / 1000;
+			trace("pose.timestamp=", pose.timestamp);
 			var iterator = curves.iterator();
 			var lastpose = node.poses.length > 0 ? node.poses[node.poses.length - 1] : null;
 			while (iterator.hasNext()) {
@@ -325,7 +329,6 @@ class FBXParser extends Object3DBaseData {
 					joint.z = obj.t.z[tansIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
-					trace("不存在过渡？");
 					if (lastjoint != null) {
 						joint.x = lastjoint.x;
 						joint.y = lastjoint.y;
@@ -340,7 +343,6 @@ class FBXParser extends Object3DBaseData {
 					joint.rotationZ = obj.r.z[rotaIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
-					trace("不存在旋转？");
 					if (lastjoint != null) {
 						joint.rotationX = lastjoint.rotationX;
 						joint.rotationY = lastjoint.rotationY;
@@ -355,7 +357,6 @@ class FBXParser extends Object3DBaseData {
 					joint.scaleZ = obj.s.z[scaleIndex];
 				} else {
 					// 不存在过渡的时候，是否考虑拷贝上一帧
-					trace("不存在缩放？");
 					if (lastjoint != null) {
 						joint.scaleX = lastjoint.scaleX;
 						joint.scaleY = lastjoint.scaleY;

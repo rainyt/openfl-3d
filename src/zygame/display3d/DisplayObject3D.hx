@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import zygame.data.anim.AnimationState;
 import zygame.data.Vertex;
 import haxe.Json;
 import lime.utils.Float32Array;
@@ -58,11 +59,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * 3D对象是否为最外层，不含2D容器
 	 */
 	private var __isRoot:Bool = true;
-
-	/**
-	 * 当前坐标的补充
-	 */
-	// public var transform3D:Matrix4;
 
 	/**
 	 * BUFFER数据
@@ -192,23 +188,23 @@ class DisplayObject3D extends DisplayObjectContainer {
 	}
 
 	/**
-	 * 绑定骨骼动画
+	 * 动画状态绑定
 	 */
-	public var skeleton(get, set):Skeleton;
+	public var animationState(get, set):AnimationState;
 
-	private var _skeleton:Skeleton;
+	private var _animationState:AnimationState;
 
-	function get_skeleton():Skeleton {
-		return _skeleton;
+	function get_animationState():AnimationState {
+		return _animationState;
 	}
 
-	function set_skeleton(value:Skeleton):Skeleton {
-		_skeleton = value;
+	function set_animationState(value:AnimationState):AnimationState {
+		_animationState = value;
 		// 绑定到底层的所有3D对象
 		for (i in 0...this.numChildren) {
 			var display = this.getChildAt(i);
 			if (Std.isOfType(display, DisplayObject3D)) {
-				cast(display, DisplayObject3D).skeleton = value;
+				cast(display, DisplayObject3D).animationState = value;
 			}
 		}
 		__updateGeometryData();
@@ -285,7 +281,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * 更新Geometry的顶点属性
 	 */
 	private function __updateGeometryData():Void {
-		if (this.geometryData == null || skeleton == null) {
+		if (this.geometryData == null || animationState == null) {
 			return;
 		}
 
@@ -294,8 +290,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 		// 更新权重和骨骼索引
 		if (this.geometryData.deformer != null) {
 			for (skin in this.geometryData.deformer.skins) {
-				var joint = skeleton.jointFromId(skin.bindJointId);
-				if (joint != null) {
+				var joint = animationState.skeleton.jointFromId(skin.bindJointId);
+				if (joint != null && skin.indexes != null && skin.weights != null) {
 					for (i in 0...skin.indexes.length) {
 						var skinIndex = skin.indexes[i];
 						if (!_maps.exists(skinIndex)) {
@@ -324,6 +320,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	public function onRender(e:RenderEvent):Void {
 		if (vertices.length == 0 || indices.length == 0)
 			return;
+		// trace("onRender?");
 		var opengl:OpenGLRenderer = cast e.renderer;
 		var gl = opengl.gl;
 		var context = Lib.application.window.stage.context3D;
@@ -447,9 +444,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 		gl.uniformMatrix4fv(projectionMatrixIndex, false, p);
 
 		var bones = [];
-		if (skeleton != null) {
-			for (i in 0...skeleton.joints.length) {
-				var joint = skeleton.joints[i];
+		if (animationState != null && animationState.currentPose != null) {
+			for (i in 0...animationState.currentPose.joints.length) {
+				var joint = animationState.currentPose.joints[i];
 				for (i in 0...16) {
 					bones.push(joint.inverseBindPose[i]);
 				}
