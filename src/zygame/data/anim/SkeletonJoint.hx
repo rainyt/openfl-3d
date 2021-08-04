@@ -35,6 +35,11 @@ class SkeletonJoint {
 	public var id:String;
 
 	/**
+	 * 是否为一个独立的节点
+	 */
+	public var independentJoint:Bool = false;
+
+	/**
 	 * 反向绑定姿势矩阵作为原始数据，用于变换顶点以绑定关节空间，以准备使用关节矩阵进行变换。
 	 */
 	public var inverseBindPose:Matrix4;
@@ -100,6 +105,7 @@ class SkeletonJoint {
 	public function copy():SkeletonJoint {
 		var joint = new SkeletonJoint();
 		joint.name = name;
+		joint.independentJoint = independentJoint;
 		joint.parentId = parentId;
 		joint.id = id;
 		joint.index = index;

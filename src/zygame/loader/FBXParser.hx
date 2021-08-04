@@ -311,7 +311,6 @@ class FBXParser extends Object3DBaseData {
 			// 开始创建姿势
 			var pose = skeleton.pose.copy();
 			pose.timestamp = t / 200000 / 200 / 1000;
-			trace("pose.timestamp=", pose.timestamp);
 			var iterator = curves.iterator();
 			var lastpose = node.poses.length > 0 ? node.poses[node.poses.length - 1] : null;
 			while (iterator.hasNext()) {
@@ -319,8 +318,9 @@ class FBXParser extends Object3DBaseData {
 				// trace(obj.object);
 				var joint = pose.jointFromName(obj.object);
 				var lastjoint = lastpose != null ? lastpose.jointFromName(obj.object) : null;
-				if (joint == null)
+				if (joint == null) {
 					continue;
+				}
 				// 平移
 				var tansIndex = obj.t != null ? obj.t.t.indexOf(t) : -1;
 				if (tansIndex != -1) {
@@ -363,6 +363,8 @@ class FBXParser extends Object3DBaseData {
 						joint.scaleZ = lastjoint.scaleZ;
 					}
 				}
+				if ("Sword01" == joint.name)
+					trace("joint=", joint.name, joint.x, joint.y, joint.z);
 			}
 			pose.updateJoints();
 			node.poses.push(pose);
@@ -582,15 +584,17 @@ class FBXParser extends Object3DBaseData {
 			o.isJoint = isJoint;
 			o.isMesh = mtype == "Mesh";
 			trace(model.getName(), mtype);
-			if (isJoint) {
+			if (isJoint || o.isMesh) {
 				// 节点
 				var joint = new SkeletonJoint();
 				joint.name = model.getName();
-				joint.id = "j" + model.getId();
+				if (isJoint)
+					joint.id = "j" + model.getId();
+				else
+					joint.id = "m" + model.getId();
 				skeletonPose.joints.push(joint);
 				o.joint = joint;
-			} else {
-				trace("不是骨骼：", model.getName());
+				joint.independentJoint = o.isMesh;
 			}
 			o.model = model;
 			o.defaultMatrixes = getDefaultMatrixes(model);
@@ -641,6 +645,7 @@ class FBXParser extends Object3DBaseData {
 			#if !undisplay
 			var mesh = new MeshDisplayObject(gdata);
 			display3d.addChild(mesh);
+			mesh.name = o.joint.name;
 			getDefaultMatrixes(o.model).initMesh(mesh);
 			#end
 			// 变形器绑定

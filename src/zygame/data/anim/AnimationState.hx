@@ -51,16 +51,29 @@ class AnimationState {
 		if (currentAnimationClipNode == null)
 			return;
 		_time += dt;
-		trace(_time);
 		var poses = currentAnimationClipNode.getPoses(_time);
 		if (poses.startPose != null && poses.endPose != null) {
 			// 开始更新骨骼动画
-			trace(poses.startPose.timestamp, poses.endPose.timestamp);
+			var p = poses.endPose.timestamp - poses.startPose.timestamp;
+			var p2 = _time % p / p;
 			for (i in 0...currentPose.joints.length) {
 				var joint = currentPose.joints[i];
 				var startJoint = poses.startPose.joints[i];
 				var endJoint = poses.endPose.joints[i];
-				Matrix4.interpolate(startJoint.inverseBindPose, endJoint.inverseBindPose, 0, joint.inverseBindPose);
+				if (joint.independentJoint) {
+					// 独立的节点
+					joint.x = startJoint.x + (endJoint.x - startJoint.x) * p2;
+					joint.y = startJoint.y + (endJoint.y - startJoint.y) * p2;
+					joint.z = startJoint.z + (endJoint.z - startJoint.z) * p2;
+					joint.rotationX = startJoint.rotationX + (endJoint.rotationX - startJoint.rotationX) * p2;
+					joint.rotationY = startJoint.rotationY + (endJoint.rotationY - startJoint.rotationY) * p2;
+					joint.rotationZ = startJoint.rotationZ + (endJoint.rotationZ - startJoint.rotationZ) * p2;
+					joint.scaleX = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
+					joint.scaleY = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
+					joint.scaleZ = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
+				} else {
+					Matrix4.interpolate(startJoint.inverseBindPose, endJoint.inverseBindPose, p2, joint.inverseBindPose);
+				}
 			}
 		}
 	}

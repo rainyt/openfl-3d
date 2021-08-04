@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import openfl.display.DisplayObject;
 import zygame.data.anim.AnimationState;
 import zygame.data.Vertex;
 import haxe.Json;
@@ -99,6 +100,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * 着色器
 	 */
 	private var shaderProgram:GLProgram;
+
+	public var transPos:Matrix4;
 
 	private var c = [];
 
@@ -447,8 +450,24 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (animationState != null && animationState.currentPose != null) {
 			for (i in 0...animationState.currentPose.joints.length) {
 				var joint = animationState.currentPose.joints[i];
-				for (i in 0...16) {
-					bones.push(joint.inverseBindPose[i]);
+				if (joint.independentJoint) {
+					// 独立的节点
+					if (this.name == joint.name) {
+						this.x = joint.x;
+						this.y = joint.y;
+						this.z = joint.z;
+						this.rotationX = joint.rotationX;
+						this.rotationY = joint.rotationY;
+						this.rotationZ = joint.rotationZ;
+						this.scaleX = joint.scaleX;
+						this.scaleY = joint.scaleY;
+						this.scaleZ = joint.scaleZ;
+						this.transPos = joint.transPos;
+					}
+				} else {
+					for (i in 0...16) {
+						bones.push(joint.inverseBindPose[i]);
+					}
 				}
 			}
 		}
@@ -529,5 +548,24 @@ class DisplayObject3D extends DisplayObjectContainer {
 			__worldTransform3D = cast(this.parent, DisplayObject3D).__worldTransform3D.clone();
 			__worldTransform3D.prepend(__transform3D);
 		}
+
+		if (transPos != null) {
+			__worldTransform3D.prepend(transPos);
+		}
+	}
+
+	public function getChild3DByName(name:String):DisplayObject3D {
+		for (i in 0...this.numChildren) {
+			var display = this.getChildAt(i);
+			trace("查找：", display.name, name);
+			if (display.name == name) {
+				return cast display;
+			} else if (Std.isOfType(display, DisplayObject3D)) {
+				display = cast(display, DisplayObject3D).getChild3DByName(name);
+				if (display != null)
+					return cast display;
+			}
+		}
+		return null;
 	}
 }
