@@ -460,22 +460,22 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		// Enable the depth test
 		gl.enable(gl.DEPTH_TEST);
-		gl.depthFunc(gl.LEQUAL);
+		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
-
-		// 剔除正面
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.FRONT);
 
 		// 绑定纹理
 		if (texture != null) {
 			var glTex = texture.getTexture(context);
 			context.setTextureAt(0, glTex);
 		}
+
+		// 剔除正面
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.FRONT);
+
 		context.drawTriangles(indexBuffer);
 
 		// 剔除背面
-		gl.enable(gl.CULL_FACE);
 		gl.cullFace(gl.BACK);
 		context.drawTriangles(indexBuffer);
 
