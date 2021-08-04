@@ -463,17 +463,20 @@ class DisplayObject3D extends DisplayObjectContainer {
 		gl.depthFunc(gl.LEQUAL);
 		gl.depthMask(true);
 
-		// 剔除
-		// gl.enable(gl.CULL_FACE);
-		// gl.frontFace(gl.CW);
-		// gl.cullFace(gl.BACK);
-		// gl.lightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+		// 剔除正面
+		gl.enable(gl.CULL_FACE);
+		gl.frontFace(gl.CCW);
+		gl.cullFace(gl.BACK);
 
 		// 绑定纹理
 		if (texture != null) {
 			var glTex = texture.getTexture(context);
 			context.setTextureAt(0, glTex);
 		}
+		context.drawTriangles(indexBuffer);
+
+		// 渲染正面
+		gl.disable(gl.CULL_FACE);
 		context.drawTriangles(indexBuffer);
 
 		gl.disable(gl.DEPTH_TEST);
