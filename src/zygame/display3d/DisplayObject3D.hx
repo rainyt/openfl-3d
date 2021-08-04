@@ -460,12 +460,12 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		// Enable the depth test
 		gl.enable(gl.DEPTH_TEST);
-		gl.depthFunc(gl.LESS);
+		gl.depthFunc(gl.LEQUAL);
 		gl.depthMask(true);
 
 		// 剔除
 		// gl.enable(gl.CULL_FACE);
-		// gl.frontFace(gl.CCW);
+		// gl.frontFace(gl.CW);
 		// gl.cullFace(gl.BACK);
 		// gl.lightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
 
