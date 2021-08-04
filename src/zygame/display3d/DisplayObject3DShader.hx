@@ -88,8 +88,9 @@ class DisplayObject3DShader {
 	@:precision("mediump float")
 	public function fragment() {
 		var color:Vec4 = texture2D(texture0, vCoord);
-		var f:Float = gl_FragCoord.z;
-		gl_FragColor = color * vec4(vec3(f), 1);
+		gl_FragColor = color;
+		// var f:Float = gl_FragCoord.z;
+		// gl_FragColor = vec4(vec3(f), 1);
 	}
 
 	public function int(a:Dynamic):Dynamic {

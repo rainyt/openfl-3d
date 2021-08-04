@@ -459,10 +459,15 @@ class DisplayObject3D extends DisplayObjectContainer {
 			gl.uniformMatrix4fv(bonesMatrixIndex, false, new Float32Array(bones));
 
 		// Enable the depth test
-
 		gl.enable(gl.DEPTH_TEST);
 		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
+
+		// 剔除
+		// gl.enable(gl.CULL_FACE);
+		// gl.frontFace(gl.CCW);
+		// gl.cullFace(gl.BACK);
+		// gl.lightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
 
 		// 绑定纹理
 		if (texture != null) {

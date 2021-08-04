@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import haxe.Exception;
 import zygame.data.anim.AnimationClipNode;
 import zygame.data.anim.SkeletonPose;
 import lime.utils.Float32Array;
@@ -112,8 +113,12 @@ class FBXParser extends Object3DBaseData {
 			// return null;
 		}
 
-		if (animName == null)
-			animName = getParent(animNode, "AnimationStack").getName();
+		try {
+			if (animName == null)
+				animName = getParent(animNode, "AnimationStack").getName();
+		} catch (e:Exception) {
+			return;
+		}
 
 		var curves = new Map();
 		var P0 = new Vertex(0, 0, 0);
@@ -647,8 +652,12 @@ class FBXParser extends Object3DBaseData {
 					var skin:Skin = new Skin();
 					skin.id = "s" + def2.getId();
 					skin.bindJointId = "j" + connect.get(def2.getId())[0];
-					skin.indexes = new Vector(def2.get("Indexes").getInts());
-					skin.weights = new Vector(def2.get("Weights").getFloats());
+					var nodeIndexes = def2.get("Indexes", true);
+					var nodeWeights = def2.get("Weights", true);
+					if (nodeIndexes != null)
+						skin.indexes = new Vector(nodeIndexes.getInts());
+					if (nodeWeights != null)
+						skin.weights = new Vector(nodeWeights.getFloats());
 					exportDeformer.skins.push(skin);
 				}
 				// 让网格绑定变形器
@@ -839,8 +848,8 @@ class FBXParser extends Object3DBaseData {
 
 	public function getChild(node:FbxNode, nodeName:String, ?opt:Bool) {
 		var c = getChilds(node, nodeName);
-		if (c.length > 1)
-			throw node.getName() + " has " + c.length + " " + nodeName + " childs " + [for (o in c) o.getName()].join(",");
+		// if (c.length > 1)
+		// throw node.getName() + " has " + c.length + " " + nodeName + " childs " + [for (o in c) o.getName()].join(",");
 		if (c.length == 0 && !opt)
 			throw "Missing " + node.getName() + " " + nodeName + " child";
 		return c[0];
@@ -873,8 +882,8 @@ class FBXParser extends Object3DBaseData {
 
 	public function getParent(node:FbxNode, nodeName:String, ?opt:Bool) {
 		var p = getParents(node, nodeName);
-		if (p.length > 1)
-			throw node.getName() + " has " + p.length + " " + nodeName + " parents " + [for (o in p) o.getName()].join(",");
+		// if (p.length > 1)
+		// throw node.getName() + " has " + p.length + " " + nodeName + " parents " + [for (o in p) o.getName()].join(",");
 		if (p.length == 0 && !opt)
 			throw "Missing " + node.getName() + " " + nodeName + " parent";
 		return p[0];
