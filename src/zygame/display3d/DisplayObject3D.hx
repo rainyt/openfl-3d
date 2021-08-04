@@ -465,8 +465,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		// 剔除正面
 		gl.enable(gl.CULL_FACE);
-		gl.frontFace(gl.CCW);
-		gl.cullFace(gl.BACK);
+		gl.cullFace(gl.FRONT);
 
 		// 绑定纹理
 		if (texture != null) {
@@ -475,10 +474,12 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 		context.drawTriangles(indexBuffer);
 
-		// 渲染正面
-		gl.disable(gl.CULL_FACE);
+		// 剔除背面
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.BACK);
 		context.drawTriangles(indexBuffer);
 
+		gl.disable(gl.CULL_FACE);
 		gl.disable(gl.DEPTH_TEST);
 		gl.depthMask(false);
 	}
