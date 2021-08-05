@@ -483,6 +483,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (texture != null && texture.texture != null) {
 			var glTex = texture.texture.getTexture(context);
 			context.setTextureAt(0, glTex);
+		} else {
+			context.setTextureAt(0, null);
 		}
 
 		if (texture != null && (texture.transparent || texture.doubleSide)) {
@@ -494,6 +496,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 			gl.cullFace(gl.BACK);
 			context.drawTriangles(indexBuffer);
 		} else {
+			// 仅剔除背面
 			gl.disable(gl.CULL_FACE);
 			context.drawTriangles(indexBuffer);
 		}
