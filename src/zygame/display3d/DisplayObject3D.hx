@@ -452,11 +452,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var bonesMatrixIndex = gl.getUniformLocation(shaderProgram, "bonesMatrix");
 
 		var p = new Matrix4();
-		#if zygame
-		@:privateAccess p.createOrtho(0, getStageWidth(), getStageHeight(), 0, -1000, 1000);
-		#else
 		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
-		#end
 
 		var m = __worldTransform3D.clone();
 		gl.uniformMatrix4fv(modelViewMatrixIndex, false, m);
@@ -567,6 +563,9 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		if (__isRoot) {
 			__worldTransform3D = __transform3D.clone();
+			__worldTransform3D.appendTranslation(this.parent.__worldTransform.tx, this.parent.__worldTransform.ty, 0);
+			__worldTransform3D.appendScale(this.parent.__worldTransform.a, this.parent.__worldTransform.d,
+				0.5 * (this.parent.__worldTransform.a + this.parent.__worldTransform.d));
 		} else {
 			__worldTransform3D = cast(this.parent, DisplayObject3D).__worldTransform3D.clone();
 			__worldTransform3D.prepend(__transform3D);
