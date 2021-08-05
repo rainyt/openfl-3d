@@ -362,22 +362,16 @@ class FBXParser extends Object3DBaseData {
 						joint.scaleZ = lastjoint.scaleZ;
 					}
 				}
-				// if (joint.independentJoint) {
-				// var model = ids.get(Std.parseInt(joint.id.substr(1)));
-				// var def = getDefaultMatrixes(model);
-				// joint.x++;
-				// joint.y -= 0.3;
-				// joint.z -= 5.;
-				// trace(obj.object, getDefaultMatrixes(model).trans);
-				// trace(joint.x, joint.y, joint.z);
-				// joint.rotationX = 0;
-				// joint.rotationX += 90;
-				// joint.rotationZ = 0;
-				// joint.x = 0;
-				// joint.y = 0;
-				// joint.z = 0;
-				// trace(def.rotate);
-				// }
+				if (joint.independentJoint) {
+					// 形状偏移值
+					var model = ids.get(Std.parseInt(joint.id.substr(1)));
+					var def = getDefaultMatrixes(model);
+					joint.transPos = def.transPos == null ? new Matrix4() : def.transPos.clone();
+					if (def.geomtrans != null) {
+						joint.transPos.appendTranslation(def.geomtrans.x, def.geomtrans.y, def.geomtrans.z);
+					}
+					trace(joint.name, joint.transPos, def.geomtrans);
+				}
 			}
 			pose.updateJoints();
 			node.poses.push(pose);
@@ -934,7 +928,8 @@ class FBXParser extends Object3DBaseData {
 		for (p in model.getAll("Properties70.P"))
 			switch (p.props[0].toString()) {
 				case "GeometricTranslation":
-				// handle in Geometry directly
+					// handle in Geometry directly
+					d.geomtrans = new Vertex(round(p.props[4].toFloat()), round(p.props[5].toFloat()), round(p.props[6].toFloat()));
 				case "PreRotation":
 					d.preRot = new Vertex(round(p.props[4].toFloat() * F), round(p.props[5].toFloat() * F), round(p.props[6].toFloat() * F));
 					if (d.preRot.x == 0 && d.preRot.y == 0 && d.preRot.z == 0)
@@ -996,6 +991,7 @@ class FBXJoint {
 }
 
 class DefaultMatrixes {
+	public var geomtrans:Null<Vertex>;
 	public var trans:Null<Vertex>;
 	public var scale:Null<Vertex>;
 	public var rotate:Null<Vertex>;

@@ -69,7 +69,26 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 纹理
 	 */
-	public var texture:BitmapData3D;
+	public var texture(get, set):BitmapData3D;
+
+	private var _texture:BitmapData3D;
+
+	private function set_texture(value:BitmapData3D):BitmapData3D {
+		_texture = value;
+		// 绑定到底层的所有3D对象
+		for (i in 0...this.numChildren) {
+			var display = this.getChildAt(i);
+			if (Std.isOfType(display, DisplayObject3D)) {
+				cast(display, DisplayObject3D).texture = value;
+			}
+		}
+		this.invalidate();
+		return value;
+	}
+
+	private function get_texture():BitmapData3D {
+		return _texture;
+	}
 
 	/**
 	 * 顶点坐标
@@ -463,6 +482,8 @@ class DisplayObject3D extends DisplayObjectContainer {
 						this.scaleY = joint.scaleY;
 						this.scaleZ = joint.scaleZ;
 						this.transPos = joint.transPos;
+						trace(this.name, joint.transPos);
+						__updateTransforms3D();
 					}
 				} else {
 					for (i in 0...16) {
@@ -556,6 +577,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 
 		if (transPos != null) {
+			trace(this.name, transPos);
 			__worldTransform3D.prepend(transPos);
 		}
 	}
@@ -563,7 +585,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 	public function getChild3DByName(name:String):DisplayObject3D {
 		for (i in 0...this.numChildren) {
 			var display = this.getChildAt(i);
-			trace("查找：", display.name, name);
 			if (display.name == name) {
 				return cast display;
 			} else if (Std.isOfType(display, DisplayObject3D)) {

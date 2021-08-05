@@ -71,6 +71,7 @@ class AnimationState {
 					joint.scaleX = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
 					joint.scaleY = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
 					joint.scaleZ = startJoint.scaleX + (endJoint.scaleX - startJoint.scaleX) * p2;
+					joint.transPos = startJoint.transPos;
 				} else {
 					Matrix4.interpolate(startJoint.inverseBindPose, endJoint.inverseBindPose, p2, joint.inverseBindPose);
 				}
