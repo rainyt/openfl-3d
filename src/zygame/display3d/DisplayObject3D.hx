@@ -326,7 +326,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 					}
 				}
 			}
-			// trace("映射索引影响结果：", _maps);
 			var num = Std.int(this.vertices.length / 3);
 			vertexBuffer.uploadFromVector(buffers, 0, num);
 		}
@@ -342,7 +341,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 	public function onRender(e:RenderEvent):Void {
 		if (vertices.length == 0 || indices.length == 0)
 			return;
-		// trace("onRender?");
 		var opengl:OpenGLRenderer = cast e.renderer;
 		var gl = opengl.gl;
 		var context = Lib.application.window.stage.context3D;
@@ -405,7 +403,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 			gl.linkProgram(shaderProgram);
 
 			if (gl.getProgramParameter(shaderProgram, gl.LINK_STATUS) == 0) {
-				trace(gl.getProgramInfoLog(shaderProgram));
 				trace("VALIDATE_STATUS: " + gl.getProgramParameter(shaderProgram, gl.VALIDATE_STATUS));
 				throw("ERROR: " + gl.getError());
 			}
@@ -482,8 +479,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 						this.scaleY = joint.scaleY;
 						this.scaleZ = joint.scaleZ;
 						this.transPos = joint.transPos;
-						trace(this.name, joint.transPos);
-						__updateTransforms3D();
+						// __updateTransforms3D();
 					}
 				} else {
 					for (i in 0...16) {
@@ -577,7 +573,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 
 		if (transPos != null) {
-			trace(this.name, transPos);
 			__worldTransform3D.prepend(transPos);
 		}
 	}
