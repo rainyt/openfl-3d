@@ -69,7 +69,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 	/**
 	 * 纹理
 	 */
-	public var texture:BitmapData;
+	public var texture:BitmapData3D;
 
 	/**
 	 * 顶点坐标
@@ -480,20 +480,23 @@ class DisplayObject3D extends DisplayObjectContainer {
 		gl.depthMask(true);
 
 		// 绑定纹理
-		if (texture != null) {
-			var glTex = texture.getTexture(context);
+		if (texture != null && texture.texture != null) {
+			var glTex = texture.texture.getTexture(context);
 			context.setTextureAt(0, glTex);
 		}
 
-		// 剔除正面
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.FRONT);
-
-		context.drawTriangles(indexBuffer);
-
-		// 剔除背面
-		gl.cullFace(gl.BACK);
-		context.drawTriangles(indexBuffer);
+		if (texture != null && (texture.transparent || texture.doubleSide)) {
+			// 剔除正面
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.FRONT);
+			context.drawTriangles(indexBuffer);
+			// 剔除背面
+			gl.cullFace(gl.BACK);
+			context.drawTriangles(indexBuffer);
+		} else {
+			gl.disable(gl.CULL_FACE);
+			context.drawTriangles(indexBuffer);
+		}
 
 		gl.disable(gl.CULL_FACE);
 		gl.disable(gl.DEPTH_TEST);

@@ -302,7 +302,7 @@ class FBXParser extends Object3DBaseData {
 
 		var allTimes = [for (a in allTimes) a];
 
-		// trace(allTimes);
+		trace(allTimes);
 		var skeleton:Skeleton = getSkeleton("main");
 		var node = new AnimationClipNode(animName);
 		var maxTime = allTimes[allTimes.length - 1];
@@ -315,7 +315,6 @@ class FBXParser extends Object3DBaseData {
 			var lastpose = node.poses.length > 0 ? node.poses[node.poses.length - 1] : null;
 			while (iterator.hasNext()) {
 				var obj = iterator.next();
-				// trace(obj.object);
 				var joint = pose.jointFromName(obj.object);
 				var lastjoint = lastpose != null ? lastpose.jointFromName(obj.object) : null;
 				if (joint == null) {
@@ -363,8 +362,22 @@ class FBXParser extends Object3DBaseData {
 						joint.scaleZ = lastjoint.scaleZ;
 					}
 				}
-				if ("Sword01" == joint.name)
-					trace("joint=", joint.name, joint.x, joint.y, joint.z);
+				// if (joint.independentJoint) {
+				// var model = ids.get(Std.parseInt(joint.id.substr(1)));
+				// var def = getDefaultMatrixes(model);
+				// joint.x++;
+				// joint.y -= 0.3;
+				// joint.z -= 5.;
+				// trace(obj.object, getDefaultMatrixes(model).trans);
+				// trace(joint.x, joint.y, joint.z);
+				// joint.rotationX = 0;
+				// joint.rotationX += 90;
+				// joint.rotationZ = 0;
+				// joint.x = 0;
+				// joint.y = 0;
+				// joint.z = 0;
+				// trace(def.rotate);
+				// }
 			}
 			pose.updateJoints();
 			node.poses.push(pose);
@@ -583,7 +596,6 @@ class FBXParser extends Object3DBaseData {
 			var o = new FBXJoint();
 			o.isJoint = isJoint;
 			o.isMesh = mtype == "Mesh";
-			trace(model.getName(), mtype);
 			if (isJoint || o.isMesh) {
 				// 节点
 				var joint = new SkeletonJoint();
@@ -645,7 +657,8 @@ class FBXParser extends Object3DBaseData {
 			#if !undisplay
 			var mesh = new MeshDisplayObject(gdata);
 			display3d.addChild(mesh);
-			mesh.name = o.joint.name;
+			if (o.joint != null)
+				mesh.name = o.joint.name;
 			getDefaultMatrixes(o.model).initMesh(mesh);
 			#end
 			// 变形器绑定
@@ -976,11 +989,8 @@ class FBXJoint {
 	public function new() {}
 
 	public function inverseBindPose():Void {
-		// trace(model.get("Properties70"));
-		// trace("\n", Json.stringify(defaultMatrixes));
 		if (defaultMatrixes != null && joint != null) {
 			defaultMatrixes.init(joint);
-			// joint.inverseBindPose = defaultMatrixes.toMatrix4();
 		}
 	}
 }
@@ -998,7 +1008,7 @@ class DefaultMatrixes {
 		if (scale != null) {
 			mesh.scaleX = this.scale.x;
 			mesh.scaleX = this.scale.y;
-			mesh.scaleX = this.scale.z;
+			mesh.scaleZ = this.scale.z;
 		}
 		if (rotate != null) {
 			mesh.rotationX = rotate.x * 180 / Math.PI;
@@ -1014,6 +1024,7 @@ class DefaultMatrixes {
 			mesh.x = trans.x;
 			mesh.y = trans.y;
 			mesh.z = trans.z;
+			trace(mesh.x, mesh.y, mesh.z);
 		}
 	}
 
@@ -1036,6 +1047,22 @@ class DefaultMatrixes {
 	}
 
 	public var transPos:Matrix4;
+
+	public function toMatrix4():Matrix4 {
+		var m4 = new Matrix4();
+		if (scale != null) {
+			m4.appendScale(scale.x, scale.y, scale.z);
+		}
+		if (rotate != null) {
+			m4.appendRotation(rotate.x, new Vector4(1, 0, 0, 0));
+			m4.appendRotation(rotate.y, new Vector4(0, 1, 0, 0));
+			m4.appendRotation(rotate.z, new Vector4(0, 0, 1, 0));
+		}
+		if (trans != null) {
+			m4.appendTranslation(trans.x, trans.y, trans.z);
+		}
+		return m4;
+	}
 }
 
 private class AnimCurve {
