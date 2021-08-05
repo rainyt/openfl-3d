@@ -36,9 +36,11 @@ this.addChild(quadTop);
 ## 当前已支持
 - 3D模型渲染，可以跟2D混合渲染
 - OBJ模型读取
-- FBX模型读取
 - 纹理UV映射
 - 角度XYZ
+- FBX模型读取
+- FBX骨骼动画
+- FBX轨迹动画支持
 
 ## 路线图
 
