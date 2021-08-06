@@ -289,14 +289,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 			buffers.push(0);
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
-		// trace("indices=", indices);
-		// trace(buffers.length, vertices.length / 3, buffers.length / (vertices.length / 3));
 	}
 
 	private function __updateBuffersData(index:Int, start:Int, value:Float):Void {
 		var id = 17 * index + start;
 		buffers[id] = value;
-		// trace("update", start, "[", 17, index, start, "]", id, buffers.length);
 	}
 
 	/**
@@ -321,8 +318,12 @@ class DisplayObject3D extends DisplayObjectContainer {
 						} else {
 							_maps.set(skinIndex, _maps.get(skinIndex) + 1);
 						}
-						__updateBuffersData(skinIndex, 8 + _maps.get(skinIndex), joint.index);
-						__updateBuffersData(skinIndex, 12 + _maps.get(skinIndex), skin.weights[i]);
+						if (_maps.get(skinIndex) + 1 <= 4) {
+							__updateBuffersData(skinIndex, 8 + _maps.get(skinIndex), joint.index);
+							__updateBuffersData(skinIndex, 12 + _maps.get(skinIndex), skin.weights[i]);
+						} else {
+							throw "骨骼影响顶点的数量不能大于4个。";
+						}
 					}
 				}
 			}

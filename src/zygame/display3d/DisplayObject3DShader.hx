@@ -54,9 +54,9 @@ class DisplayObject3DShader {
 
 	@:uniform public var texture0:Sampler2D;
 
-	// /**
-	//  * 骨骼动画 最大支持68根骨头
-	//  */
+	/**
+	 * 骨骼动画 最大支持68根骨头
+	 */
 	@:arrayLen(28)
 	@:uniform public var bonesMatrix:Array<Mat4>;
 

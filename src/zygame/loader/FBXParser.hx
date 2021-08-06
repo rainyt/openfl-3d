@@ -302,7 +302,7 @@ class FBXParser extends Object3DBaseData {
 
 		var allTimes = [for (a in allTimes) a];
 
-		trace(allTimes);
+		// trace(allTimes);
 		var skeleton:Skeleton = getSkeleton("main");
 		var node = new AnimationClipNode(animName);
 		var maxTime = allTimes[allTimes.length - 1];
@@ -370,7 +370,6 @@ class FBXParser extends Object3DBaseData {
 					if (def.geomtrans != null) {
 						joint.transPos.appendTranslation(def.geomtrans.x, def.geomtrans.y, def.geomtrans.z);
 					}
-					trace(joint.name, joint.transPos, def.geomtrans);
 				}
 			}
 			pose.updateJoints();
