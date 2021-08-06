@@ -70,7 +70,6 @@ class FBXParser extends Object3DBaseData {
 
 		autoMerge();
 
-		// trace(invConnect);
 		for (child in root.childs) {
 			init(child);
 		}
@@ -78,10 +77,6 @@ class FBXParser extends Object3DBaseData {
 		// loadAnimate 加载动画
 		this.loadAnimate();
 
-		// fileName = root.getAll("Takes.Take.FileName")[0].props[0].toString();
-		// trace(root.getAll("Takes.Take"));
-		// trace(root.getAll("Takes.Take.LocalTime"));
-		// trace(root.getAll("Takes.Take.ReferenceTime"));
 	}
 
 	public function loadAnimate():Void {
@@ -163,7 +158,6 @@ class FBXParser extends Object3DBaseData {
 					}
 					// this should give significant-enough key
 					var it = Std.int(t / 200000);
-					// trace("it=",it / 200 / 1000,t);
 					allTimes.set(it, t);
 				}
 
@@ -234,8 +228,6 @@ class FBXParser extends Object3DBaseData {
 					}
 				}
 
-				// trace(cname, Json.stringify(c.def));
-
 				// this can happen when resampling anims due to rounding errors, let's ignore it for now
 				// if( data.y.length != times.length || data.z.length != times.length )
 				//	throw "Unsynchronized curve components on " + model.getName()+"."+cname+" (" + data.x.length + "/" + data.y.length + "/" + data.z.length + ")";
@@ -294,7 +286,6 @@ class FBXParser extends Object3DBaseData {
 					default:
 						throw "assert";
 				}
-				// trace(curves);
 			}
 
 		trace("动画名：", animName, animNodes.length);
@@ -428,14 +419,10 @@ class FBXParser extends Object3DBaseData {
 	}
 
 	private function init(child:FbxNode) {
-		// trace("init", child.name);
 		var type = child.name;
 		switch (type) {
 			case "Objects":
 				// 解析模型
-				// for (c in child.childs) {
-				// trace(c.name, c.getName());
-				// }
 				var geometrys = child.getAll("Geometry");
 				for (g in geometrys) {
 					parsingGeometry(g);
@@ -698,13 +685,11 @@ class FBXParser extends Object3DBaseData {
 		}
 		var parent = getParent(model, "Model", true);
 		if (parent == null) {
-			trace("这个原因");
 			return true;
 		}
 		var t = parent.getType();
 		if (t == "LimbNode" || t == "Root")
 			return false;
-		trace("这个原因");
 		return true;
 	}
 
@@ -774,15 +759,8 @@ class FBXParser extends Object3DBaseData {
 			case "Objects":
 				for (c in n.childs) {
 					ids.set(c.getId(), c);
-					// trace("ids",c.getId(),c.name);
 				}
 			default:
-		}
-	}
-
-	private function parsingAnimate(child:FbxNode):Void {
-		for (c in child.childs) {
-			trace(c.name);
 		}
 	}
 
@@ -1019,7 +997,6 @@ class DefaultMatrixes {
 			mesh.x = trans.x;
 			mesh.y = trans.y;
 			mesh.z = trans.z;
-			trace(mesh.x, mesh.y, mesh.z);
 		}
 	}
 
