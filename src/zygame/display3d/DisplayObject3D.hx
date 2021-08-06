@@ -590,4 +590,34 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 		return null;
 	}
+
+	private function __childCopy(c:DisplayObject3D):Void {
+		c.x = this.x;
+		c.y = this.y;
+		c.z = this.z;
+		c.scaleX = this.scaleX;
+		c.scaleY = this.scaleY;
+		c.scaleZ = this.scaleZ;
+		c.texture = this.texture;
+		c.rotationX = this.rotationX;
+		c.rotationY = this.rotationY;
+		c.rotationZ = this.rotationZ;
+		for (i in 0...this.numChildren) {
+			var child = this.getChildAt(i);
+			if (Std.isOfType(child, DisplayObject3D)) {
+				var c2 = cast(child, DisplayObject3D).copy();
+				c.addChild(c2);
+			}
+		}
+	}
+
+	/**
+	 * 拷贝一个副本
+	 * @return DisplayObject3D
+	 */
+	public function copy():DisplayObject3D {
+		var c = new DisplayObject3D(this.vertices, this.indices, this.uvs);
+		__childCopy(c);
+		return c;
+	}
 }

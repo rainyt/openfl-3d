@@ -9,7 +9,12 @@ class MeshDisplayObject extends DisplayObject3D {
 	public function new(geomtryData:GeometryData) {
 		super(geomtryData.getVertices(), geomtryData.getIndices(), geomtryData.getUVs());
 		this.__geometryData = geomtryData;
-		// if (geomtryData == null || geomtryData.getVertices().length == 0 || geomtryData.getIndices().length == 0)
-			// throw "无效的GeometryData数据";
+	}
+
+	override function copy():DisplayObject3D {
+		trace("copy:",geometryData);
+		var c = new MeshDisplayObject(geometryData);
+		__childCopy(c);
+		return c;
 	}
 }

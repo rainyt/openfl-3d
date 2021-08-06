@@ -195,4 +195,10 @@ class CubeDisplayObject extends DisplayObject3D {
 
 		super(v, i, uvs);
 	}
+
+	override function copy():DisplayObject3D {
+		var c = new CubeDisplayObject();
+		__childCopy(c);
+		return c;
+	}
 }
