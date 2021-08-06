@@ -76,7 +76,6 @@ class FBXParser extends Object3DBaseData {
 
 		// loadAnimate 加载动画
 		this.loadAnimate();
-
 	}
 
 	public function loadAnimate():Void {
@@ -769,6 +768,8 @@ class FBXParser extends Object3DBaseData {
 			var geomtry = new GeometryData();
 			// 获取顶点
 			geomtry.verticesArray = new Vector(child.get("Vertices").getFloats().copy());
+			// 获取法线
+			geomtry.vertexNormalsArray = new Vector(child.get("LayerElementNormal.Normals").getFloats().copy());
 			// 获取索引
 			var array = child.get("PolygonVertexIndex").getInts();
 			var indices = [];

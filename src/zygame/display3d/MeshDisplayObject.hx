@@ -7,12 +7,12 @@ import zygame.data.GeometryData;
  */
 class MeshDisplayObject extends DisplayObject3D {
 	public function new(geomtryData:GeometryData) {
-		super(geomtryData.getVertices(), geomtryData.getIndices(), geomtryData.getUVs());
+		super(geomtryData.getVertices(), geomtryData.getIndices(), geomtryData.getUVs(), geomtryData.vertexNormalsArray);
 		this.__geometryData = geomtryData;
 	}
 
 	override function copy():DisplayObject3D {
-		trace("copy:",geometryData);
+		trace("copy:", geometryData);
 		var c = new MeshDisplayObject(geometryData);
 		__childCopy(c);
 		return c;

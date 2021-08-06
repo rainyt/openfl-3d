@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import zygame.lights.Light;
 import openfl.display.DisplayObject;
 import zygame.data.anim.AnimationState;
 import zygame.data.Vertex;
@@ -65,6 +66,30 @@ class DisplayObject3D extends DisplayObjectContainer {
 	 * BUFFER数据
 	 */
 	public var buffers:Vector<Float>;
+
+	/**
+	 * 光源
+	 */
+	public var light(get, set):Light;
+
+	private var _light:Light;
+
+	private function set_light(value:Light):Light {
+		_light = value;
+		// 绑定到底层的所有3D对象
+		for (i in 0...this.numChildren) {
+			var display = this.getChildAt(i);
+			if (Std.isOfType(display, DisplayObject3D)) {
+				cast(display, DisplayObject3D).light = value;
+			}
+		}
+		this.invalidate();
+		return value;
+	}
+
+	private function get_light():Light {
+		return _light;
+	}
 
 	/**
 	 * 纹理
@@ -233,7 +258,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		return value;
 	}
 
-	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null) {
+	public function new(vertices:Vector<Float> = null, indices:Vector<Int> = null, uvs:Vector<Float> = null, normals:Vector<Float> = null) {
 		super();
 		#if !zygame
 		this.addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
@@ -244,7 +269,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		if (vertices == null || indices == null)
 			return;
 		var context = Lib.application.window.stage.context3D;
-		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 17);
+		vertexBuffer = context.createVertexBuffer(Std.int(vertices.length / 3), 20);
 		indexBuffer = context.createIndexBuffer(this.indices.length);
 		indexBuffer.uploadFromTypedArray(new UInt16Array(indices));
 
@@ -287,12 +312,22 @@ class DisplayObject3D extends DisplayObjectContainer {
 			buffers.push(0);
 			buffers.push(0);
 			buffers.push(0);
+			// 法线
+			if (normals != null) {
+				buffers.push(normals[i * 3]);
+				buffers.push(normals[i * 3 + 1]);
+				buffers.push(normals[i * 3 + 2]);
+			} else {
+				buffers.push(0);
+				buffers.push(0);
+				buffers.push(0);
+			}
 		}
 		vertexBuffer.uploadFromVector(buffers, 0, num);
 	}
 
 	private function __updateBuffersData(index:Int, start:Int, value:Float):Void {
-		var id = 17 * index + start;
+		var id = 20 * index + start;
 		buffers[id] = value;
 	}
 
@@ -405,7 +440,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 			if (gl.getProgramParameter(shaderProgram, gl.LINK_STATUS) == 0) {
 				trace("VALIDATE_STATUS: " + gl.getProgramParameter(shaderProgram, gl.VALIDATE_STATUS));
-				throw("ERROR: " + gl.getError());
+				throw("ERROR: " + gl.getProgramInfoLog(shaderProgram));
 			}
 		}
 
@@ -434,6 +469,10 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var boneWeight = gl.getAttribLocation(shaderProgram, "boneWeight");
 		context.setVertexBufferAt(boneWeight, vertexBuffer, 13, FLOAT_4);
 
+		// 法线
+		var normal = gl.getAttribLocation(shaderProgram, "zy_normal");
+		context.setVertexBufferAt(normal, vertexBuffer, 17, FLOAT_3);
+
 		// 位移
 		// var _matpos = gl.getAttribLocation(shaderProgram, "pos");
 		// context.setVertexBufferAt(_matpos, vertexBuffer, 9, FLOAT_3);
@@ -451,6 +490,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		var modelViewMatrixIndex = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
 		var projectionMatrixIndex = gl.getUniformLocation(shaderProgram, "projectionMatrix");
 		var bonesMatrixIndex = gl.getUniformLocation(shaderProgram, "bonesMatrix");
+		var lightIndex = gl.getUniformLocation(shaderProgram, "light");
 
 		var p = new Matrix4();
 		@:privateAccess p.createOrtho(0, stage.stageWidth, stage.stageHeight, 0, -1000, 1000);
@@ -487,6 +527,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 		if (bones.length != 0)
 			gl.uniformMatrix4fv(bonesMatrixIndex, false, new Float32Array(bones));
+
+		if (light != null) {
+			var lightArray = [light.direction.x, light.direction.y, light.direction.z];
+			gl.uniform3fv(lightIndex, new Float32Array(lightArray));
+		}
 
 		// Enable the depth test
 		gl.enable(gl.DEPTH_TEST);

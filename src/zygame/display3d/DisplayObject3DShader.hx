@@ -5,6 +5,7 @@ import glsl.Sampler2D;
 import VectorMath;
 import glsl.OpenFLShader;
 
+@:debug
 @:build(glsl.macro.GLSLCompileMacro.build("glsl"))
 class DisplayObject3DShader {
 	public var gl_Position:Dynamic;
@@ -27,6 +28,11 @@ class DisplayObject3DShader {
 	 * 3D纹理
 	 */
 	@:attribute public var zy_coord:Vec2;
+
+	/**
+	 * 法线
+	 */
+	@:attribute public var zy_normal:Vec3;
 
 	/**
 	 * 骨骼索引
@@ -60,6 +66,8 @@ class DisplayObject3DShader {
 	@:arrayLen(28)
 	@:uniform public var bonesMatrix:Array<Mat4>;
 
+	@:uniform public var light:Vec3;
+
 	@:vertexglsl public function getBoneMatrixByIndex(i:Float):Mat4 {
 		var bone:Mat4 = bonesMatrix[int(i)];
 		return bone;
@@ -73,6 +81,7 @@ class DisplayObject3DShader {
 		return skinMat;
 	}
 
+	@:precision("mediump float")
 	public function vertex() {
 		var mat:Mat4 = modelViewMatrix;
 		if (boneIndex.x != -1) {
@@ -81,16 +90,27 @@ class DisplayObject3DShader {
 		}
 		// 权重 和 骨骼矩阵
 		gl_Position = projectionMatrix * (mat) * vec4(zy_pos, 1.0);
-		vColor = zy_color;
+
+		// 法线与光
+		var s:Vec3;
+		// if (LightPosition.w == 0.0)
+		s = normalize(light);
+		// else
+		// s = normalize(vec3(LightPosition - position));
+
+		var v:Vec3 = normalize(vec3(-gl_Position));
+		var r:Vec3 = reflect(-s, zy_normal);
+
+		// var passNormal:Vec3 = normalize(zy_normal * p.xyz);
+		// vColor = vec4(vec3(1, 0, 0) * passNormal, 1);
+		vColor = vec4(vec3(0.3, 1.0, 0.3) * max(dot(s, zy_normal), 0.0), 1);
 		vCoord = zy_coord;
 	}
 
 	@:precision("mediump float")
 	public function fragment() {
-		var color:Vec4 = texture2D(texture0, vCoord);
+		var color:Vec4 = texture2D(texture0, vCoord) + vColor;
 		gl_FragColor = color;
-		// var f:Float = gl_FragCoord.z;
-		// gl_FragColor = vec4(vec3(f), 1);
 	}
 
 	public function int(a:Dynamic):Dynamic {
