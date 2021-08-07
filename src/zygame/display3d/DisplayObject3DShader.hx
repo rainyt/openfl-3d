@@ -58,6 +58,8 @@ class DisplayObject3DShader {
 
 	@:varying public var vCoord:Vec2;
 
+	@:varying public var vNormal:Vec3;
+
 	@:uniform public var texture0:Sampler2D;
 
 	/**
@@ -94,22 +96,22 @@ class DisplayObject3DShader {
 		// 法线与光
 		var s:Vec3;
 		// if (LightPosition.w == 0.0)
-		s = normalize(light);
+		s = normalize(light).xyz;
 		// else
 		// s = normalize(vec3(LightPosition - position));
 
-		var v:Vec3 = normalize(vec3(-gl_Position));
+		var v:Vec3 = normalize(-zy_pos);
 		var r:Vec3 = reflect(-s, zy_normal);
 
-		// var passNormal:Vec3 = normalize(zy_normal * p.xyz);
-		// vColor = vec4(vec3(1, 0, 0) * passNormal, 1);
 		vColor = vec4(vec3(0.3, 1.0, 0.3) * max(dot(s, zy_normal), 0.0), 1);
 		vCoord = zy_coord;
+		vNormal = zy_normal;
 	}
 
 	@:precision("mediump float")
 	public function fragment() {
-		var color:Vec4 = texture2D(texture0, vCoord) + vColor;
+		var color:Vec4 = texture2D(texture0, vCoord);
+		color += vec4(vColor.xyz, 0.) * color.a;
 		gl_FragColor = color;
 	}
 
