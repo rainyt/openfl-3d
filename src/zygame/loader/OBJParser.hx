@@ -1,5 +1,6 @@
 package zygame.loader;
 
+import zygame.display3d.MeshDisplayObject;
 import zygame.data.GeometryData;
 import haxe.macro.Expr.Error;
 import openfl.Vector;
@@ -27,6 +28,8 @@ class OBJParser extends Object3DBaseData {
 		}
 		translateMaterialGroup();
 		this.setGeometry("main", _geometry);
+
+		this.display3d = new MeshDisplayObject(_geometry);
 	}
 
 	/**

@@ -4,6 +4,7 @@ import zygame.data.anim.Deformer;
 import openfl.Vector;
 
 class GeometryData {
+
 	/**
 	 * 皮肤变形器
 	 */
