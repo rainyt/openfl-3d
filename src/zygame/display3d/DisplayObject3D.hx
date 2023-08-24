@@ -607,8 +607,6 @@ class DisplayObject3D extends DisplayObjectContainer {
 		__transform3D.appendRotation(rotationZ, new Vector4(0, 0, 1, 0));
 		__transform3D.appendTranslation(this.x, this.y, this.z);
 
-		trace("__transform3D=", this.x, this.y, this.z);
-
 		if (__isRoot) {
 			__worldTransform3D = __transform3D.clone();
 			__worldTransform3D.appendTranslation(this.parent.__worldTransform.tx, this.parent.__worldTransform.ty, 0);

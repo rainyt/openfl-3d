@@ -83,7 +83,7 @@ class DisplayObject3DShader {
 		return skinMat;
 	}
 
-	@:precision("mediump float")
+	// @:precision("mediump float")
 	public function vertex() {
 		var mat:Mat4 = modelViewMatrix;
 		if (boneIndex.x != -1) {
@@ -108,7 +108,7 @@ class DisplayObject3DShader {
 		vNormal = zy_normal;
 	}
 
-	@:precision("mediump float")
+	// @:precision("mediump float")
 	public function fragment() {
 		var color:Vec4 = texture2D(texture0, vCoord);
 		color += vec4(vColor.xyz, 0.) * color.a;
