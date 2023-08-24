@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	
+	<meta title="Samples" package="com.sample.samples" version="1.0.0" company="Company Name" />
+	<app main="Main" path="Export" file="Samples" />
+	
+	<source path="Source" />
+	
+	<haxelib name="openfl" />
+
+	<haxelib name="openfl-3d"/>
+
+	<haxelib name="openfl-glsl"/>
+	
+	<assets path="Assets" rename="assets" />
+	
+</project>
