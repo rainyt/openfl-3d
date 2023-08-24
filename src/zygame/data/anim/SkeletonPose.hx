@@ -81,7 +81,7 @@ class SkeletonPose {
 	 * 通过名字获取骨骼Index
 	 * @param jointName 骨骼名称
 	 */
-	public function jointIndexFromName(jointName:String):Int {
+	public function jointIndexFromName(jointName:String):Null<Int> {
 		if (joints == null)
 			return null;
 		var jointIndex:Int = 0;
@@ -112,7 +112,7 @@ class SkeletonPose {
 	 * 通过ID获取骨骼Index
 	 * @param jointName 骨骼名称
 	 */
-	public function jointIndexFromId(jointId:String):Int {
+	public function jointIndexFromId(jointId:String):Null<Int> {
 		if (joints == null)
 			return null;
 		var jointIndex:Int = 0;
