@@ -555,7 +555,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 
 		// Enable the depth test
-		gl.enable(gl.DEPTH_TEST);)
+		gl.enable(gl.DEPTH_TEST);
 		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
 
