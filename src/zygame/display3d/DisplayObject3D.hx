@@ -1,5 +1,6 @@
 package zygame.display3d;
 
+import lime.graphics.opengl.GL;
 import zygame.lights.Light;
 import openfl.display.DisplayObject;
 import zygame.data.anim.AnimationState;
@@ -388,7 +389,23 @@ class DisplayObject3D extends DisplayObjectContainer {
 
 		if (shaderProgram == null) {
 			// Vertex shader Code
+			#if cpp
+			var glsl = [];
+			// glsl.push("#ifdef GL_FRAGMENT_PRECISION_HIGH\n");
+			// glsl.push("precision highp float;\n");
+			// glsl.push("#else\n");
+			// glsl.push("precision mediump float;\n");
+			// glsl.push("#endif\n");
+			var glslHeader = glsl.join("");
+			#end
+
+			#if cpp
+			var shaderVersion = Std.parseFloat(GL.getParameter(GL.SHADING_LANGUAGE_VERSION)) * 100;
+			var vertCode = "#version " + shaderVersion + "\n\n" + DisplayObject3DShader.vertexSource;
+			trace("vertCode=", vertCode);
+			#else
 			var vertCode = DisplayObject3DShader.vertexSource;
+			#end
 
 			// Create a vertex shader object
 			var vertShader = gl.createShader(gl.VERTEX_SHADER);
@@ -407,7 +424,11 @@ class DisplayObject3D extends DisplayObjectContainer {
 			}
 
 			// fragment shader source code
+			#if cpp
+			var fragCode = "#version " + shaderVersion + "\n\n" + glslHeader + DisplayObject3DShader.fragmentSource;
+			#else
 			var fragCode = DisplayObject3DShader.fragmentSource;
+			#end
 
 			// Create fragment shader object
 			var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -419,7 +440,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 			gl.compileShader(fragShader);
 
 			if (gl.getShaderParameter(fragShader, gl.COMPILE_STATUS) == 0) {
-				var message = "Error compiling vertex shader";
+				var message = "Error compiling frag shader";
 				message += "\n" + gl.getShaderInfoLog(fragShader);
 				message += "\n" + fragCode;
 				throw message;
@@ -534,7 +555,7 @@ class DisplayObject3D extends DisplayObjectContainer {
 		}
 
 		// Enable the depth test
-		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.DEPTH_TEST);)
 		gl.depthFunc(gl.LESS);
 		gl.depthMask(true);
 

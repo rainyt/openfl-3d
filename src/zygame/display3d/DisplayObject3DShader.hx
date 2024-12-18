@@ -85,6 +85,8 @@ class DisplayObject3DShader {
 
 	#if !cpp
 	@:precision("mediump float")
+	#else
+	// @:precision("highp float")
 	#end
 	public function vertex() {
 		var mat:Mat4 = modelViewMatrix;
@@ -112,11 +114,15 @@ class DisplayObject3DShader {
 
 	#if !cpp
 	@:precision("mediump float")
+	#else
+	// @:precision("highp float")
 	#end
 	public function fragment() {
 		var color:Vec4 = texture2D(texture0, vCoord);
 		color += vec4(vColor.xyz, 0.) * color.a;
 		gl_FragColor = color;
+		// test
+		// gl_FragColor = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);
 	}
 
 	public function int(a:Dynamic):Dynamic {

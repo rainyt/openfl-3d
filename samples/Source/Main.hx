@@ -1,5 +1,6 @@
 package;
 
+import openfl.events.MouseEvent;
 import openfl.events.RenderEvent;
 import openfl.Assets;
 import zygame.display3d.BitmapData3D;
@@ -18,7 +19,7 @@ class Main extends Sprite {
 		quadBottom.graphics.beginFill(0xff0000);
 		quadBottom.graphics.drawCircle(0, 0, 100);
 		this.addChild(quadBottom);
-		quadBottom.x = stage.stageWidth / 2 - 100; 
+		quadBottom.x = stage.stageWidth / 2 - 100;
 		quadBottom.y = stage.stageHeight / 2 - 100;
 
 		// 3D
@@ -27,7 +28,7 @@ class Main extends Sprite {
 		d3d.texture = new BitmapData3D(Assets.getBitmapData("assets/1_0.png"));
 		d3d.x = stage.stageWidth / 2;
 		d3d.y = stage.stageHeight / 2;
-		d3d.z = -100;
+		d3d.rotationY = 45;
 		d3d.scale(100);
 
 		// 2D
@@ -38,9 +39,15 @@ class Main extends Sprite {
 		quadTop.y = stage.stageHeight / 2 + 100;
 		this.addChild(quadTop);
 
+		var isStop = false;
+		stage.addEventListener(MouseEvent.CLICK, (e) -> {
+			isStop = !isStop;
+		});
 		this.addEventListener(Event.ENTER_FRAME, (e) -> {
-			d3d.rotationX++;
-			d3d.rotationZ++;
+			if (!isStop) {
+				d3d.rotationY++;
+				d3d.rotationZ++;
+			}
 		});
 	}
 }
